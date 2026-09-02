@@ -20,6 +20,7 @@ class Sale extends Model
         'total',
         'payment_method',
         'paid',
+        'delivered',
         'sold_by',
         'notes',
     ];
@@ -28,6 +29,7 @@ class Sale extends Model
     {
         return [
             'paid' => 'boolean',
+            'delivered' => 'boolean',
         ];
     }
 

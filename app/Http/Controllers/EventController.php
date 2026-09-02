@@ -93,6 +93,7 @@ class EventController extends Controller
                 'total' => (float) $sale->total,
                 'payment_method' => $sale->payment_method,
                 'paid' => $sale->paid,
+                'delivered' => $sale->delivered,
                 'sold_by' => $sale->seller->name,
                 'created_at' => $sale->created_at->toDateTimeString(),
             ]),

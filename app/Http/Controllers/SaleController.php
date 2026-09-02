@@ -75,16 +75,28 @@ class SaleController extends Controller
     public function update(Request $request, Sale $sale): RedirectResponse
     {
         $data = $request->validate([
-            'paid' => ['required', 'boolean'],
+            'paid' => ['sometimes', 'boolean'],
             'payment_method' => ['required_if:paid,true', 'nullable', 'in:Efectivo,Nequi'],
+            'delivered' => ['sometimes', 'boolean'],
+            'customer_name' => ['sometimes', 'string', 'max:255'],
+            'quantity' => ['sometimes', 'integer', 'min:1'],
         ]);
 
-        $sale->update([
-            'paid' => $data['paid'],
-            'payment_method' => $data['paid'] ? $data['payment_method'] : null,
-        ]);
+        try {
+            DB::transaction(function () use ($sale, $data) {
+                $payload = $this->saleUpdatePayload($data);
 
-        return back()->with('success', $data['paid'] ? 'Venta marcada como pagada.' : 'Venta marcada como pendiente.');
+                if (array_key_exists('quantity', $data)) {
+                    $payload = [...$payload, ...$this->quantityUpdatePayload($sale, $data['quantity'])];
+                }
+
+                $sale->update($payload);
+            });
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors());
+        }
+
+        return back()->with('success', 'Venta actualizada.');
     }
 
     public function destroy(Sale $sale): RedirectResponse
@@ -97,16 +109,33 @@ class SaleController extends Controller
     public function updateGroup(Request $request, string $groupId): RedirectResponse
     {
         $data = $request->validate([
-            'paid' => ['required', 'boolean'],
+            'paid' => ['sometimes', 'boolean'],
             'payment_method' => ['required_if:paid,true', 'nullable', 'in:Efectivo,Nequi'],
+            'delivered' => ['sometimes', 'boolean'],
+            'customer_name' => ['sometimes', 'string', 'max:255'],
+            'items' => ['sometimes', 'array', 'min:1'],
+            'items.*.id' => ['required_with:items', Rule::exists('sales', 'id')->where('group_id', $groupId)],
+            'items.*.quantity' => ['required_with:items', 'integer', 'min:1'],
         ]);
 
-        Sale::where('group_id', $groupId)->update([
-            'paid' => $data['paid'],
-            'payment_method' => $data['paid'] ? $data['payment_method'] : null,
-        ]);
+        try {
+            DB::transaction(function () use ($groupId, $data) {
+                $payload = $this->saleUpdatePayload($data);
 
-        return back()->with('success', $data['paid'] ? 'Venta marcada como pagada.' : 'Venta marcada como pendiente.');
+                if (! empty($payload)) {
+                    Sale::where('group_id', $groupId)->update($payload);
+                }
+
+                foreach ($data['items'] ?? [] as $item) {
+                    $sale = Sale::where('id', $item['id'])->where('group_id', $groupId)->lockForUpdate()->firstOrFail();
+                    $sale->update($this->quantityUpdatePayload($sale, $item['quantity']));
+                }
+            });
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors());
+        }
+
+        return back()->with('success', 'Venta actualizada.');
     }
 
     public function destroyGroup(string $groupId): RedirectResponse
@@ -114,5 +143,55 @@ class SaleController extends Controller
         Sale::where('group_id', $groupId)->delete();
 
         return back()->with('success', 'Venta anulada, stock repuesto.');
+    }
+
+    /**
+     * Only touch the columns the request actually sent, so e.g. a delivery-status
+     * toggle doesn't also overwrite the unrelated payment state.
+     */
+    private function saleUpdatePayload(array $data): array
+    {
+        $payload = [];
+
+        if (array_key_exists('paid', $data)) {
+            $payload['paid'] = $data['paid'];
+            $payload['payment_method'] = $data['paid'] ? ($data['payment_method'] ?? null) : null;
+        }
+
+        if (array_key_exists('delivered', $data)) {
+            $payload['delivered'] = $data['delivered'];
+        }
+
+        if (array_key_exists('customer_name', $data)) {
+            $payload['customer_name'] = $data['customer_name'];
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Re-checks stock for this sale's product excluding its own current
+     * quantity, and returns the quantity/total columns to save.
+     */
+    private function quantityUpdatePayload(Sale $sale, int $quantity): array
+    {
+        $eventProduct = EventProduct::where('id', $sale->event_product_id)
+            ->lockForUpdate()
+            ->with('product')
+            ->firstOrFail();
+
+        $soldElsewhere = $eventProduct->sales()->where('id', '!=', $sale->id)->sum('quantity');
+        $available = $eventProduct->quantity_made - $soldElsewhere;
+
+        if ($quantity > $available) {
+            throw ValidationException::withMessages([
+                'items' => "Solo quedan {$available} unidades de \"{$eventProduct->product->name}\" disponibles.",
+            ]);
+        }
+
+        return [
+            'quantity' => $quantity,
+            'total' => $eventProduct->unit_price * $quantity,
+        ];
     }
 }

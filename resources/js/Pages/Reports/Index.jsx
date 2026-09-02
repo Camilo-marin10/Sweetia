@@ -1,5 +1,5 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { Head, Link, router } from "@inertiajs/react";
 import {
     Bar,
     BarChart,
@@ -10,21 +10,27 @@ import {
     Tooltip,
     XAxis,
     YAxis,
-} from 'recharts';
+} from "recharts";
 
 const money = (value) =>
-    new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value);
+    new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+        maximumFractionDigits: 0,
+    }).format(value);
 
 const compactMoney = (value) => {
-    const sign = value < 0 ? '-' : '';
+    const sign = value < 0 ? "-" : "";
     const abs = Math.abs(value);
-    if (abs >= 1000000) return `${sign}$${(abs / 1000000).toFixed(1).replace(/\.0$/, '')}M`;
+    if (abs >= 1000000)
+        return `${sign}$${(abs / 1000000).toFixed(1).replace(/\.0$/, "")}M`;
     if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(0)}K`;
     return `${sign}$${abs}`;
 };
 
-const pad = (n) => String(n).padStart(2, '0');
-const toISODate = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+const pad = (n) => String(n).padStart(2, "0");
+const toISODate = (date) =>
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 
 function computePresets() {
     const now = new Date();
@@ -33,22 +39,22 @@ function computePresets() {
 
     return {
         thisMonth: {
-            label: 'Este mes',
+            label: "Este mes",
             from: toISODate(new Date(y, m, 1)),
             to: toISODate(new Date(y, m + 1, 0)),
         },
         lastMonth: {
-            label: 'Mes pasado',
+            label: "Mes pasado",
             from: toISODate(new Date(y, m - 1, 1)),
             to: toISODate(new Date(y, m, 0)),
         },
         thisYear: {
-            label: 'Este año',
+            label: "Este año",
             from: toISODate(new Date(y, 0, 1)),
             to: toISODate(new Date(y, 11, 31)),
         },
         lastYear: {
-            label: 'Año pasado',
+            label: "Año pasado",
             from: toISODate(new Date(y - 1, 0, 1)),
             to: toISODate(new Date(y - 1, 11, 31)),
         },
@@ -95,12 +101,17 @@ function ChartTooltip({ active, payload, label, formatter = money }) {
         <div className="rounded-lg border border-gray-100 bg-white px-3 py-2 shadow-lg">
             <p className="mb-1 text-xs font-medium text-gray-500">{label}</p>
             {payload.map((entry) => (
-                <div key={entry.dataKey} className="flex items-center gap-2 text-sm">
+                <div
+                    key={entry.dataKey}
+                    className="flex items-center gap-2 text-sm"
+                >
                     <span
                         className="inline-block h-0.5 w-3"
                         style={{ backgroundColor: entry.color }}
                     />
-                    <span className="font-semibold text-gray-900">{formatter(entry.value)}</span>
+                    <span className="font-semibold text-gray-900">
+                        {formatter(entry.value)}
+                    </span>
                     <span className="text-gray-500">{entry.name}</span>
                 </div>
             ))}
@@ -108,65 +119,85 @@ function ChartTooltip({ active, payload, label, formatter = money }) {
     );
 }
 
-export default function Index({ filters, summary, months, events, expensesByProduct }) {
+export default function Index({
+    filters,
+    summary,
+    months,
+    events,
+    expensesByProduct,
+}) {
     const presets = computePresets();
 
     const applyRange = (from, to) => {
         router.get(
-            route('reports.index'),
+            route("reports.index"),
             { from, to },
             { preserveState: true, preserveScroll: true, replace: true },
         );
     };
 
-    const isActivePreset = (preset) => preset.from === filters.from && preset.to === filters.to;
+    const isActivePreset = (preset) =>
+        preset.from === filters.from && preset.to === filters.to;
 
     return (
         <AuthenticatedLayout
             header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Finanzas
-                </h2>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d15d8e]">
+                            Dashboard
+                        </p>
+                        <h2 className="mt-1 text-2xl font-semibold leading-tight text-[#241b2a]">
+                            Finanzas
+                        </h2>
+                    </div>
+                </div>
             }
         >
             <Head title="Finanzas" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-6xl space-y-6 sm:px-6 lg:px-8">
+            <div className="py-8">
+                <div className="mx-auto max-w-6xl space-y-6">
                     {/* Date range filter — scopes everything below it */}
-                    <div className="flex flex-wrap items-end gap-3 rounded-lg bg-white p-4 shadow">
+                    <div className="app-panel-soft flex flex-wrap items-end gap-4 p-4 sm:p-5">
                         <div className="flex flex-wrap gap-2">
                             {Object.values(presets).map((preset) => (
                                 <button
                                     key={preset.label}
-                                    onClick={() => applyRange(preset.from, preset.to)}
-                                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                                    onClick={() =>
+                                        applyRange(preset.from, preset.to)
+                                    }
+                                    className={`toolbar-button ${
                                         isActivePreset(preset)
-                                            ? 'bg-rose-600 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            ? "bg-gradient-to-r from-[#d94a7d] to-[#bf3d6e] text-white shadow-[0_16px_30px_rgba(190,77,120,0.25)]"
+                                            : "border border-[#f2dce7] bg-[#fffafc] text-[#4b3b4b] hover:bg-[#fff2f8]"
                                     }`}
                                 >
                                     {preset.label}
                                 </button>
                             ))}
                         </div>
-                        <div className="ms-auto flex items-end gap-2 border-l border-gray-200 pl-3">
+                        <div className="ms-auto flex items-end gap-3 border-l border-[#f0dbe5] pl-4">
                             <div>
-                                <label className="block text-xs text-gray-500">Desde</label>
+                                <label className="soft-label">Desde</label>
                                 <input
                                     type="date"
                                     value={filters.from}
-                                    onChange={(e) => applyRange(e.target.value, filters.to)}
-                                    className="rounded-md border-gray-300 py-1.5 text-sm shadow-sm focus:border-rose-500 focus:ring-rose-500"
+                                    onChange={(e) =>
+                                        applyRange(e.target.value, filters.to)
+                                    }
+                                    className="field-input w-[160px] py-2.5"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs text-gray-500">Hasta</label>
+                                <label className="soft-label">Hasta</label>
                                 <input
                                     type="date"
                                     value={filters.to}
-                                    onChange={(e) => applyRange(filters.from, e.target.value)}
-                                    className="rounded-md border-gray-300 py-1.5 text-sm shadow-sm focus:border-rose-500 focus:ring-rose-500"
+                                    onChange={(e) =>
+                                        applyRange(filters.from, e.target.value)
+                                    }
+                                    className="field-input w-[160px] py-2.5"
                                 />
                             </div>
                         </div>
@@ -177,26 +208,49 @@ export default function Index({ filters, summary, months, events, expensesByProd
                     <div className="grid gap-6 lg:grid-cols-2">
                         <ChartCard title="Ganancia por mes">
                             <ResponsiveContainer width="100%" height={260}>
-                                <BarChart data={months} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                                    <CartesianGrid vertical={false} stroke="#e5e7eb" />
+                                <BarChart
+                                    data={months}
+                                    margin={{
+                                        top: 8,
+                                        right: 8,
+                                        left: 0,
+                                        bottom: 0,
+                                    }}
+                                >
+                                    <CartesianGrid
+                                        vertical={false}
+                                        stroke="#e5e7eb"
+                                    />
                                     <XAxis
                                         dataKey="label"
-                                        tick={{ fill: '#898781', fontSize: 12 }}
-                                        axisLine={{ stroke: '#c3c2b7' }}
+                                        tick={{ fill: "#898781", fontSize: 12 }}
+                                        axisLine={{ stroke: "#c3c2b7" }}
                                         tickLine={false}
                                     />
                                     <YAxis
-                                        tick={{ fill: '#898781', fontSize: 12 }}
+                                        tick={{ fill: "#898781", fontSize: 12 }}
                                         tickFormatter={compactMoney}
                                         axisLine={false}
                                         tickLine={false}
                                     />
-                                    <Tooltip content={<ChartTooltip />} cursor={{ fill: '#f3f4f6' }} />
-                                    <Bar dataKey="profit" name="Ganancia" shape={DivergingBar} maxBarSize={28}>
+                                    <Tooltip
+                                        content={<ChartTooltip />}
+                                        cursor={{ fill: "#f3f4f6" }}
+                                    />
+                                    <Bar
+                                        dataKey="profit"
+                                        name="Ganancia"
+                                        shape={DivergingBar}
+                                        maxBarSize={28}
+                                    >
                                         {months.map((m) => (
                                             <Cell
                                                 key={m.month}
-                                                fill={m.profit >= 0 ? '#2563eb' : '#dc2626'}
+                                                fill={
+                                                    m.profit >= 0
+                                                        ? "#2563eb"
+                                                        : "#dc2626"
+                                                }
                                             />
                                         ))}
                                     </Bar>
@@ -206,23 +260,40 @@ export default function Index({ filters, summary, months, events, expensesByProd
 
                         <ChartCard title="Unidades vendidas por mes">
                             <ResponsiveContainer width="100%" height={260}>
-                                <BarChart data={months} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                                    <CartesianGrid vertical={false} stroke="#e5e7eb" />
+                                <BarChart
+                                    data={months}
+                                    margin={{
+                                        top: 8,
+                                        right: 8,
+                                        left: 0,
+                                        bottom: 0,
+                                    }}
+                                >
+                                    <CartesianGrid
+                                        vertical={false}
+                                        stroke="#e5e7eb"
+                                    />
                                     <XAxis
                                         dataKey="label"
-                                        tick={{ fill: '#898781', fontSize: 12 }}
-                                        axisLine={{ stroke: '#c3c2b7' }}
+                                        tick={{ fill: "#898781", fontSize: 12 }}
+                                        axisLine={{ stroke: "#c3c2b7" }}
                                         tickLine={false}
                                     />
                                     <YAxis
-                                        tick={{ fill: '#898781', fontSize: 12 }}
+                                        tick={{ fill: "#898781", fontSize: 12 }}
                                         allowDecimals={false}
                                         axisLine={false}
                                         tickLine={false}
                                     />
                                     <Tooltip
-                                        content={<ChartTooltip formatter={(v) => `${v} unidades`} />}
-                                        cursor={{ fill: '#f3f4f6' }}
+                                        content={
+                                            <ChartTooltip
+                                                formatter={(v) =>
+                                                    `${v} unidades`
+                                                }
+                                            />
+                                        }
+                                        cursor={{ fill: "#f3f4f6" }}
                                     />
                                     <Bar
                                         dataKey="quantity"
@@ -235,35 +306,70 @@ export default function Index({ filters, summary, months, events, expensesByProd
                             </ResponsiveContainer>
                         </ChartCard>
 
-                        <ChartCard title="Ingresos vs. gastos por mes" className="lg:col-span-2">
+                        <ChartCard
+                            title="Ingresos vs. gastos por mes"
+                            className="lg:col-span-2"
+                        >
                             <ResponsiveContainer width="100%" height={280}>
-                                <BarChart data={months} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                                    <CartesianGrid vertical={false} stroke="#e5e7eb" />
+                                <BarChart
+                                    data={months}
+                                    margin={{
+                                        top: 8,
+                                        right: 8,
+                                        left: 0,
+                                        bottom: 0,
+                                    }}
+                                >
+                                    <CartesianGrid
+                                        vertical={false}
+                                        stroke="#e5e7eb"
+                                    />
                                     <XAxis
                                         dataKey="label"
-                                        tick={{ fill: '#898781', fontSize: 12 }}
-                                        axisLine={{ stroke: '#c3c2b7' }}
+                                        tick={{ fill: "#898781", fontSize: 12 }}
+                                        axisLine={{ stroke: "#c3c2b7" }}
                                         tickLine={false}
                                     />
                                     <YAxis
-                                        tick={{ fill: '#898781', fontSize: 12 }}
+                                        tick={{ fill: "#898781", fontSize: 12 }}
                                         tickFormatter={compactMoney}
                                         axisLine={false}
                                         tickLine={false}
                                     />
-                                    <Tooltip content={<ChartTooltip />} cursor={{ fill: '#f3f4f6' }} />
+                                    <Tooltip
+                                        content={<ChartTooltip />}
+                                        cursor={{ fill: "#f3f4f6" }}
+                                    />
                                     <Legend
                                         iconType="square"
-                                        wrapperStyle={{ fontSize: 13, color: '#52514e' }}
+                                        wrapperStyle={{
+                                            fontSize: 13,
+                                            color: "#52514e",
+                                        }}
                                     />
-                                    <Bar dataKey="income" name="Ingresos" fill="#e11d48" shape={RoundedBar} maxBarSize={20} />
-                                    <Bar dataKey="expenses" name="Gastos" fill="#2563eb" shape={RoundedBar} maxBarSize={20} />
+                                    <Bar
+                                        dataKey="income"
+                                        name="Ingresos"
+                                        fill="#e11d48"
+                                        shape={RoundedBar}
+                                        maxBarSize={20}
+                                    />
+                                    <Bar
+                                        dataKey="expenses"
+                                        name="Gastos"
+                                        fill="#2563eb"
+                                        shape={RoundedBar}
+                                        maxBarSize={20}
+                                    />
                                 </BarChart>
                             </ResponsiveContainer>
                         </ChartCard>
                     </div>
 
-                    <ExpensesByProductTable expensesByProduct={expensesByProduct} totalExpenses={summary.expenses} />
+                    <ExpensesByProductTable
+                        expensesByProduct={expensesByProduct}
+                        totalExpenses={summary.expenses}
+                    />
 
                     <EventsTable events={events} />
                 </div>
@@ -274,37 +380,55 @@ export default function Index({ filters, summary, months, events, expensesByProd
 
 function SummaryCards({ summary }) {
     const cards = [
-        { label: 'Ingresos', value: money(summary.income), tone: 'text-gray-900' },
         {
-            label: 'Por cobrar',
+            label: "Ingresos",
+            value: money(summary.income),
+            tone: "text-gray-900",
+        },
+        {
+            label: "Por cobrar",
             value: money(summary.pending),
-            tone: summary.pending > 0 ? 'text-amber-600' : 'text-gray-900',
+            tone: summary.pending > 0 ? "text-amber-600" : "text-gray-900",
         },
-        { label: 'Gastos', value: money(summary.expenses), tone: 'text-gray-900' },
         {
-            label: 'Ganancia',
-            value: money(summary.profit),
-            tone: summary.profit >= 0 ? 'text-green-600' : 'text-red-600',
+            label: "Gastos",
+            value: money(summary.expenses),
+            tone: "text-gray-900",
         },
-        { label: 'Unidades vendidas', value: summary.quantitySold, tone: 'text-gray-900' },
+        {
+            label: "Ganancia",
+            value: money(summary.profit),
+            tone: summary.profit >= 0 ? "text-green-600" : "text-red-600",
+        },
+        {
+            label: "Unidades vendidas",
+            value: summary.quantitySold,
+            tone: "text-gray-900",
+        },
     ];
 
     return (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
             {cards.map((card) => (
-                <div key={card.label} className="rounded-lg bg-white p-5 shadow">
-                    <p className="text-sm text-gray-500">{card.label}</p>
-                    <p className={`mt-1 text-2xl font-semibold ${card.tone}`}>{card.value}</p>
+                <div key={card.label} className="app-panel-soft p-4 sm:p-5">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7a6876]">
+                        {card.label}
+                    </p>
+                    <p className={`mt-3 text-2xl font-semibold ${card.tone}`}>
+                        {card.value}
+                    </p>
                 </div>
             ))}
         </div>
     );
 }
 
-function ChartCard({ title, children, className = '' }) {
+function ChartCard({ title, children, className = "" }) {
     return (
-        <div className={`rounded-lg bg-white p-5 shadow sm:p-6 ${className}`}>
-            <h3 className="mb-4 text-base font-medium text-gray-900">{title}</h3>
+        <div className={`app-panel p-5 sm:p-6 ${className}`}>
+            <h3 className="mb-4 text-lg font-semibold text-[#241b2a]">
+                {title}
+            </h3>
             {children}
         </div>
     );
@@ -312,13 +436,15 @@ function ChartCard({ title, children, className = '' }) {
 
 function ExpensesByProductTable({ expensesByProduct, totalExpenses }) {
     return (
-        <div className="rounded-lg bg-white shadow">
-            <h3 className="px-5 pt-5 text-base font-medium text-gray-900 sm:px-6 sm:pt-6">
-                Gastos por producto
-            </h3>
+        <div className="app-panel overflow-hidden">
+            <div className="border-b border-[#f4dfe8] bg-[#fffafc] px-5 py-4 sm:px-6">
+                <h3 className="text-lg font-semibold text-[#241b2a]">
+                    Gastos por producto
+                </h3>
+            </div>
             <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                    <thead className="border-b text-xs uppercase text-gray-500">
+                <table className="data-table">
+                    <thead>
                         <tr>
                             <th className="px-5 py-3 sm:px-6">Producto</th>
                             <th className="px-5 py-3 sm:px-6">Monto</th>
@@ -327,26 +453,32 @@ function ExpensesByProductTable({ expensesByProduct, totalExpenses }) {
                     </thead>
                     <tbody>
                         {expensesByProduct.map((row) => {
-                            const percent = totalExpenses > 0 ? (row.total / totalExpenses) * 100 : 0;
+                            const percent =
+                                totalExpenses > 0
+                                    ? (row.total / totalExpenses) * 100
+                                    : 0;
 
                             return (
-                                <tr
-                                    key={row.product_id ?? 'general'}
-                                    className="border-b transition-colors last:border-0 hover:bg-rose-50/50"
-                                >
-                                    <td className="px-5 py-3 font-medium text-gray-900 sm:px-6">
+                                <tr key={row.product_id ?? "general"}>
+                                    <td className="px-5 py-3 font-semibold text-[#241b2a] sm:px-6">
                                         {row.product_name}
                                     </td>
-                                    <td className="px-5 py-3 sm:px-6">{money(row.total)}</td>
+                                    <td className="px-5 py-3 sm:px-6">
+                                        {money(row.total)}
+                                    </td>
                                     <td className="px-5 py-3 sm:px-6">
                                         <div className="flex items-center gap-2">
-                                            <div className="h-1.5 w-24 overflow-hidden rounded-full bg-gray-100">
+                                            <div className="h-1.5 w-24 overflow-hidden rounded-full bg-[#f5e2eb]">
                                                 <div
-                                                    className="h-full rounded-full bg-rose-500"
-                                                    style={{ width: `${Math.min(percent, 100)}%` }}
+                                                    className="h-full rounded-full bg-gradient-to-r from-[#d94a7d] to-[#bf3d6e]"
+                                                    style={{
+                                                        width: `${Math.min(percent, 100)}%`,
+                                                    }}
                                                 />
                                             </div>
-                                            <span className="text-gray-500">{percent.toFixed(0)}%</span>
+                                            <span className="text-[#6e6774]">
+                                                {percent.toFixed(0)}%
+                                            </span>
                                         </div>
                                     </td>
                                 </tr>
@@ -354,7 +486,10 @@ function ExpensesByProductTable({ expensesByProduct, totalExpenses }) {
                         })}
                         {expensesByProduct.length === 0 && (
                             <tr>
-                                <td colSpan={3} className="px-5 py-6 text-center text-gray-500 sm:px-6">
+                                <td
+                                    colSpan={3}
+                                    className="px-5 py-6 text-center text-[#6e6774] sm:px-6"
+                                >
                                     No hay gastos en el periodo seleccionado.
                                 </td>
                             </tr>
@@ -367,20 +502,22 @@ function ExpensesByProductTable({ expensesByProduct, totalExpenses }) {
 }
 
 const eventStatusStyles = {
-    planificado: 'bg-gray-100 text-gray-700',
-    activo: 'bg-rose-100 text-rose-700',
-    cerrado: 'bg-red-100 text-red-700',
+    planificado: "bg-gray-100 text-gray-700",
+    activo: "bg-rose-100 text-rose-700",
+    cerrado: "bg-red-100 text-red-700",
 };
 
 function EventsTable({ events }) {
     return (
-        <div className="rounded-lg bg-white shadow">
-            <h3 className="px-5 pt-5 text-base font-medium text-gray-900 sm:px-6 sm:pt-6">
-                Eventos en el periodo
-            </h3>
+        <div className="app-panel overflow-hidden">
+            <div className="border-b border-[#f4dfe8] bg-[#fffafc] px-5 py-4 sm:px-6">
+                <h3 className="text-lg font-semibold text-[#241b2a]">
+                    Eventos en el periodo
+                </h3>
+            </div>
             <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                    <thead className="border-b text-xs uppercase text-gray-500">
+                <table className="data-table">
+                    <thead>
                         <tr>
                             <th className="px-5 py-3 sm:px-6">Evento</th>
                             <th className="px-5 py-3 sm:px-6">Fecha</th>
@@ -392,24 +529,33 @@ function EventsTable({ events }) {
                     </thead>
                     <tbody>
                         {events.map((event) => (
-                            <tr key={event.id} className="border-b transition-colors last:border-0 hover:bg-rose-50/50">
-                                <td className="px-5 py-3 font-medium text-gray-900 sm:px-6">
-                                    <Link href={route('events.show', event.id)} className="hover:underline">
+                            <tr key={event.id}>
+                                <td className="px-5 py-3 font-semibold text-[#241b2a] sm:px-6">
+                                    <Link
+                                        href={route("events.show", event.id)}
+                                        className="hover:text-[#b93d69]"
+                                    >
                                         {event.name}
                                     </Link>
                                 </td>
-                                <td className="px-5 py-3 text-gray-600 sm:px-6">{event.event_date}</td>
+                                <td className="px-5 py-3 text-[#635867] sm:px-6">
+                                    {event.event_date}
+                                </td>
                                 <td className="px-5 py-3 sm:px-6">
                                     <span
-                                        className={`rounded-full px-2 py-1 text-xs font-medium capitalize ${eventStatusStyles[event.status]}`}
+                                        className={`status-pill capitalize ${eventStatusStyles[event.status]}`}
                                     >
                                         {event.status}
                                     </span>
                                 </td>
-                                <td className="px-5 py-3 sm:px-6">{money(event.income)}</td>
-                                <td className="px-5 py-3 sm:px-6">{money(event.expenses)}</td>
+                                <td className="px-5 py-3 sm:px-6">
+                                    {money(event.income)}
+                                </td>
+                                <td className="px-5 py-3 sm:px-6">
+                                    {money(event.expenses)}
+                                </td>
                                 <td
-                                    className={`px-5 py-3 font-medium sm:px-6 ${event.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                                    className={`px-5 py-3 font-semibold sm:px-6 ${event.profit >= 0 ? "text-[#1f9d72]" : "text-[#d85c68]"}`}
                                 >
                                     {money(event.profit)}
                                 </td>
@@ -417,7 +563,10 @@ function EventsTable({ events }) {
                         ))}
                         {events.length === 0 && (
                             <tr>
-                                <td colSpan={6} className="px-5 py-6 text-center text-gray-500 sm:px-6">
+                                <td
+                                    colSpan={6}
+                                    className="px-5 py-6 text-center text-[#6e6774] sm:px-6"
+                                >
                                     No hay eventos en el periodo seleccionado.
                                 </td>
                             </tr>

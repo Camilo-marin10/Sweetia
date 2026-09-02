@@ -1,6 +1,6 @@
-import { Transition } from '@headlessui/react';
-import { Link } from '@inertiajs/react';
-import { createContext, useContext, useState } from 'react';
+import { Transition } from "@headlessui/react";
+import { Link } from "@inertiajs/react";
+import { createContext, useContext, useState } from "react";
 
 const DropDownContext = createContext();
 
@@ -36,25 +36,25 @@ const Trigger = ({ children }) => {
 };
 
 const Content = ({
-    align = 'right',
-    width = '48',
-    contentClasses = 'py-1 bg-white',
+    align = "right",
+    width = "48",
+    contentClasses = "py-1 bg-white",
     children,
 }) => {
     const { open, setOpen } = useContext(DropDownContext);
 
-    let alignmentClasses = 'origin-top';
+    let alignmentClasses = "origin-top";
 
-    if (align === 'left') {
-        alignmentClasses = 'ltr:origin-top-left rtl:origin-top-right start-0';
-    } else if (align === 'right') {
-        alignmentClasses = 'ltr:origin-top-right rtl:origin-top-left end-0';
+    if (align === "left") {
+        alignmentClasses = "ltr:origin-top-left rtl:origin-top-right start-0";
+    } else if (align === "right") {
+        alignmentClasses = "ltr:origin-top-right rtl:origin-top-left end-0";
     }
 
-    let widthClasses = '';
+    let widthClasses = "";
 
-    if (width === '48') {
-        widthClasses = 'w-48';
+    if (width === "48") {
+        widthClasses = "w-48";
     }
 
     return (
@@ -69,12 +69,12 @@ const Content = ({
                 leaveTo="opacity-0 scale-95"
             >
                 <div
-                    className={`absolute z-50 mt-2 rounded-md shadow-lg ${alignmentClasses} ${widthClasses}`}
+                    className={`absolute z-50 mt-2 rounded-2xl shadow-[0_24px_40px_rgba(80,39,62,0.12)] ${alignmentClasses} ${widthClasses}`}
                     onClick={() => setOpen(false)}
                 >
                     <div
                         className={
-                            `rounded-md ring-1 ring-black ring-opacity-5 ` +
+                            `overflow-hidden rounded-2xl border border-[#f3dfe8] bg-white ` +
                             contentClasses
                         }
                     >
@@ -86,12 +86,12 @@ const Content = ({
     );
 };
 
-const DropdownLink = ({ className = '', children, ...props }) => {
+const DropdownLink = ({ className = "", children, ...props }) => {
     return (
         <Link
             {...props}
             className={
-                'block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 transition duration-150 ease-in-out hover:bg-gray-100 focus:bg-gray-100 focus:outline-none ' +
+                "block w-full px-4 py-2.5 text-start text-sm font-medium text-[#4b3b4b] transition duration-150 ease-in-out hover:bg-[#fff3f8] hover:text-[#b93d69] focus:bg-[#fff3f8] focus:text-[#b93d69] focus:outline-none " +
                 className
             }
         >

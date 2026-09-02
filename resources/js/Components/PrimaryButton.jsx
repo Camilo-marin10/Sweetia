@@ -1,5 +1,5 @@
 export default function PrimaryButton({
-    className = '',
+    className = "",
     disabled,
     children,
     ...props
@@ -8,8 +8,8 @@ export default function PrimaryButton({
         <button
             {...props}
             className={
-                `inline-flex items-center rounded-lg border border-transparent bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition duration-150 ease-in-out hover:bg-rose-700 focus:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 active:bg-rose-800 ${
-                    disabled && 'opacity-25'
+                `inline-flex items-center justify-center rounded-full border border-transparent bg-gradient-to-r from-[#d94a7d] to-[#bf3d6e] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_16px_30px_rgba(190,77,120,0.28)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_36px_rgba(190,77,120,0.32)] focus:outline-none focus:ring-4 focus:ring-[#f7dce8] active:translate-y-0 ${
+                    disabled && "cursor-not-allowed opacity-25"
                 } ` + className
             }
             disabled={disabled}

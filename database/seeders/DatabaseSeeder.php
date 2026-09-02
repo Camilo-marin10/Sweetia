@@ -11,13 +11,11 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
     public function run(): void
     {
-        User::updateOrCreate(
-            ['email' => 'callemajo123@gmail.com'],
-            [
-                'name' => 'Majosillaycamilillo',
-                'password' => bcrypt('password'),
-                'role' => 'admin',
-            ],
-        );
+        User::factory()->create([
+            'name' => 'Mariajosilla',
+            'email' => 'callemajo123@gmail.com',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+        ]);
     }
 }

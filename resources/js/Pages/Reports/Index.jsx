@@ -108,7 +108,7 @@ function ChartTooltip({ active, payload, label, formatter = money }) {
     );
 }
 
-export default function Index({ filters, summary, months, events }) {
+export default function Index({ filters, summary, months, events, expensesByProduct }) {
     const presets = computePresets();
 
     const applyRange = (from, to) => {
@@ -263,6 +263,8 @@ export default function Index({ filters, summary, months, events }) {
                         </ChartCard>
                     </div>
 
+                    <ExpensesByProductTable expensesByProduct={expensesByProduct} totalExpenses={summary.expenses} />
+
                     <EventsTable events={events} />
                 </div>
             </div>
@@ -304,6 +306,62 @@ function ChartCard({ title, children, className = '' }) {
         <div className={`rounded-lg bg-white p-5 shadow sm:p-6 ${className}`}>
             <h3 className="mb-4 text-base font-medium text-gray-900">{title}</h3>
             {children}
+        </div>
+    );
+}
+
+function ExpensesByProductTable({ expensesByProduct, totalExpenses }) {
+    return (
+        <div className="rounded-lg bg-white shadow">
+            <h3 className="px-5 pt-5 text-base font-medium text-gray-900 sm:px-6 sm:pt-6">
+                Gastos por producto
+            </h3>
+            <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                    <thead className="border-b text-xs uppercase text-gray-500">
+                        <tr>
+                            <th className="px-5 py-3 sm:px-6">Producto</th>
+                            <th className="px-5 py-3 sm:px-6">Monto</th>
+                            <th className="px-5 py-3 sm:px-6">% del total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {expensesByProduct.map((row) => {
+                            const percent = totalExpenses > 0 ? (row.total / totalExpenses) * 100 : 0;
+
+                            return (
+                                <tr
+                                    key={row.product_id ?? 'general'}
+                                    className="border-b transition-colors last:border-0 hover:bg-rose-50/50"
+                                >
+                                    <td className="px-5 py-3 font-medium text-gray-900 sm:px-6">
+                                        {row.product_name}
+                                    </td>
+                                    <td className="px-5 py-3 sm:px-6">{money(row.total)}</td>
+                                    <td className="px-5 py-3 sm:px-6">
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-1.5 w-24 overflow-hidden rounded-full bg-gray-100">
+                                                <div
+                                                    className="h-full rounded-full bg-rose-500"
+                                                    style={{ width: `${Math.min(percent, 100)}%` }}
+                                                />
+                                            </div>
+                                            <span className="text-gray-500">{percent.toFixed(0)}%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                        {expensesByProduct.length === 0 && (
+                            <tr>
+                                <td colSpan={3} className="px-5 py-6 text-center text-gray-500 sm:px-6">
+                                    No hay gastos en el periodo seleccionado.
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }

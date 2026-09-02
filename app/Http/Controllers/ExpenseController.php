@@ -6,12 +6,17 @@ use App\Models\Event;
 use App\Models\Expense;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ExpenseController extends Controller
 {
     public function store(Request $request, Event $event): RedirectResponse
     {
         $data = $request->validate([
+            'event_product_id' => [
+                'nullable',
+                Rule::exists('event_products', 'id')->where('event_id', $event->id),
+            ],
             'category' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0'],
@@ -29,6 +34,10 @@ class ExpenseController extends Controller
     public function update(Request $request, Expense $expense): RedirectResponse
     {
         $data = $request->validate([
+            'event_product_id' => [
+                'nullable',
+                Rule::exists('event_products', 'id')->where('event_id', $expense->event_id),
+            ],
             'category' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0'],

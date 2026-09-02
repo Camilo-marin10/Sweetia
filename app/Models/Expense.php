@@ -12,6 +12,7 @@ class Expense extends Model
 
     protected $fillable = [
         'event_id',
+        'event_product_id',
         'category',
         'description',
         'amount',
@@ -29,6 +30,11 @@ class Expense extends Model
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
+    }
+
+    public function eventProduct(): BelongsTo
+    {
+        return $this->belongsTo(EventProduct::class);
     }
 
     public function registeredByUser(): BelongsTo

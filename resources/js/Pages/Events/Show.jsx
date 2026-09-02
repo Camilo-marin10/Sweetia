@@ -32,7 +32,7 @@ export default function Show({ event, eventProducts, sales, expenses, summary, a
                         availableProducts={availableProducts}
                     />
                     <SalesSection event={event} eventProducts={eventProducts} sales={sales} />
-                    <ExpensesSection event={event} expenses={expenses} />
+                    <ExpensesSection event={event} eventProducts={eventProducts} expenses={expenses} />
                 </div>
             </div>
         </AuthenticatedLayout>
@@ -410,8 +410,9 @@ function SaleStatusCell({ sale }) {
     );
 }
 
-function ExpensesSection({ event, expenses }) {
+function ExpensesSection({ event, eventProducts, expenses }) {
     const form = useForm({
+        event_product_id: '',
         category: '',
         description: '',
         amount: '',
@@ -420,10 +421,15 @@ function ExpensesSection({ event, expenses }) {
 
     const submit = (e) => {
         e.preventDefault();
-        form.post(route('expenses.store', event.id), {
-            preserveScroll: true,
-            onSuccess: () => form.reset('category', 'description', 'amount'),
-        });
+        form
+            .transform((data) => ({
+                ...data,
+                event_product_id: data.event_product_id || null,
+            }))
+            .post(route('expenses.store', event.id), {
+                preserveScroll: true,
+                onSuccess: () => form.reset('category', 'description', 'amount'),
+            });
     };
 
     const destroy = (expense) => {
@@ -432,11 +438,30 @@ function ExpensesSection({ event, expenses }) {
         }
     };
 
+    const generalExpenses = expenses.filter((expense) => !expense.event_product_id);
+
     return (
         <section className="rounded-lg bg-white p-5 shadow sm:p-8">
             <h3 className="mb-4 text-lg font-medium text-gray-900">Gastos</h3>
 
             <form onSubmit={submit} className="mb-6 flex flex-wrap items-start gap-4">
+                <div>
+                    <InputLabel htmlFor="event_product_id" value="Producto" />
+                    <select
+                        id="event_product_id"
+                        value={form.data.event_product_id}
+                        onChange={(e) => form.setData('event_product_id', e.target.value)}
+                        className="mt-1 block w-48 rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500"
+                    >
+                        <option value="">General (todos los productos)</option>
+                        {eventProducts.map((ep) => (
+                            <option key={ep.id} value={ep.id}>
+                                {ep.product.name}
+                            </option>
+                        ))}
+                    </select>
+                    <InputError message={form.errors.event_product_id} className="mt-1" />
+                </div>
                 <div>
                     <InputLabel htmlFor="category" value="Categoría" />
                     <TextInput
@@ -486,6 +511,37 @@ function ExpensesSection({ event, expenses }) {
                 </div>
             </form>
 
+            <ExpensesTable title="Gastos generales" expenses={generalExpenses} onDestroy={destroy} />
+
+            {eventProducts.map((ep) => {
+                const productExpenses = expenses.filter((expense) => expense.event_product_id === ep.id);
+
+                if (productExpenses.length === 0) {
+                    return null;
+                }
+
+                return (
+                    <ExpensesTable
+                        key={ep.id}
+                        title={`Gastos de ${ep.product.name}`}
+                        expenses={productExpenses}
+                        onDestroy={destroy}
+                    />
+                );
+            })}
+        </section>
+    );
+}
+
+function ExpensesTable({ title, expenses, onDestroy }) {
+    const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+
+    return (
+        <div className="mb-6 last:mb-0">
+            <div className="mb-2 flex items-center justify-between">
+                <h4 className="text-sm font-semibold text-gray-700">{title}</h4>
+                <span className="text-sm text-gray-500">{money(total)}</span>
+            </div>
             <table className="w-full text-left text-sm">
                 <thead className="border-b text-xs uppercase text-gray-500">
                     <tr>
@@ -507,7 +563,7 @@ function ExpensesSection({ event, expenses }) {
                             <td className="py-2 pr-2 text-gray-500">{expense.registered_by}</td>
                             <td className="py-2 pr-2 text-right">
                                 <button
-                                    onClick={() => destroy(expense)}
+                                    onClick={() => onDestroy(expense)}
                                     className="text-red-600 hover:underline"
                                 >
                                     Eliminar
@@ -517,13 +573,13 @@ function ExpensesSection({ event, expenses }) {
                     ))}
                     {expenses.length === 0 && (
                         <tr>
-                            <td colSpan={6} className="py-4 text-center text-gray-500">
-                                Todavía no hay gastos registrados.
+                            <td colSpan={6} className="py-3 text-center text-gray-400">
+                                Sin gastos registrados.
                             </td>
                         </tr>
                     )}
                 </tbody>
             </table>
-        </section>
+        </div>
     );
 }

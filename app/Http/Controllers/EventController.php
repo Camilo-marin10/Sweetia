@@ -56,7 +56,7 @@ class EventController extends Controller
         $event->load([
             'eventProducts' => fn ($query) => $query->withSum('sales', 'quantity')->with('product'),
             'sales' => fn ($query) => $query->latest()->with(['eventProduct.product', 'seller']),
-            'expenses' => fn ($query) => $query->latest()->with('registeredByUser'),
+            'expenses' => fn ($query) => $query->latest()->with(['registeredByUser', 'eventProduct.product']),
         ]);
 
         $income = $event->sales->where('paid', true)->sum('total');
@@ -97,6 +97,8 @@ class EventController extends Controller
             ]),
             'expenses' => $event->expenses->map(fn ($expense) => [
                 'id' => $expense->id,
+                'event_product_id' => $expense->event_product_id,
+                'product_name' => $expense->eventProduct?->product->name,
                 'category' => $expense->category,
                 'description' => $expense->description,
                 'amount' => (float) $expense->amount,

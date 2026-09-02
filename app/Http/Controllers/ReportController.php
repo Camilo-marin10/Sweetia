@@ -61,6 +61,20 @@ class ReportController extends Controller
             ->groupBy('month')
             ->pluck('total', 'month');
 
+        $expensesByProduct = DB::table('expenses')
+            ->leftJoin('event_products', 'event_products.id', '=', 'expenses.event_product_id')
+            ->leftJoin('products', 'products.id', '=', 'event_products.product_id')
+            ->whereIn('expenses.event_id', $eventIds)
+            ->selectRaw('products.id as product_id, COALESCE(products.name, ?) as product_name, SUM(expenses.amount) as total', ['General'])
+            ->groupBy('products.id', 'product_name')
+            ->orderByDesc('total')
+            ->get()
+            ->map(fn ($row) => [
+                'product_id' => $row->product_id,
+                'product_name' => $row->product_name,
+                'total' => (float) $row->total,
+            ]);
+
         $quantityByMonth = DB::table('sales')
             ->join('events', 'events.id', '=', 'sales.event_id')
             ->whereIn('sales.event_id', $eventIds)
@@ -117,6 +131,7 @@ class ReportController extends Controller
             ],
             'months' => $months,
             'events' => $events,
+            'expensesByProduct' => $expensesByProduct,
         ]);
     }
 }

@@ -85,6 +85,7 @@ class EventController extends Controller
             ]),
             'sales' => $event->sales->map(fn ($sale) => [
                 'id' => $sale->id,
+                'group_id' => $sale->group_id,
                 'customer_name' => $sale->customer_name,
                 'product_name' => $sale->eventProduct->product->name,
                 'quantity' => $sale->quantity,

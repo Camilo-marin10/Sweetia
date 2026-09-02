@@ -2,9 +2,10 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, useForm, router } from '@inertiajs/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const money = (value) =>
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value);
@@ -229,36 +230,93 @@ function EventProductsSection({ event, eventProducts, availableProducts }) {
 function SalesSection({ event, eventProducts, sales }) {
     const sellable = eventProducts.filter((ep) => ep.quantity_available > 0);
 
-    const form = useForm({
-        event_product_id: sellable[0]?.id ?? '',
-        customer_name: '',
-        quantity: 1,
-    });
+    const [customerName, setCustomerName] = useState('');
+    const [cart, setCart] = useState([]); // [{ event_product_id, product_name, unit_price, quantity }]
+    const [pickProductId, setPickProductId] = useState(sellable[0]?.id ?? '');
+    const [pickQuantity, setPickQuantity] = useState(1);
+    const [errors, setErrors] = useState({});
+    const [processing, setProcessing] = useState(false);
 
-    // Keep the selected product valid as stock changes (event just created with
-    // no products yet, a product sells out, etc.) — the <select> silently shows
-    // the first option when its bound value matches nothing, but the stale form
-    // state is what actually gets submitted.
     const sellableIds = sellable.map((ep) => ep.id).join(',');
     useEffect(() => {
-        if (sellable.length > 0 && !sellable.some((ep) => ep.id === form.data.event_product_id)) {
-            form.setData('event_product_id', sellable[0].id);
+        if (sellable.length > 0 && !sellable.some((ep) => ep.id === pickProductId)) {
+            setPickProductId(sellable[0].id);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sellableIds]);
 
-    const submit = (e) => {
+    const inCart = (eventProductId) => cart.find((item) => item.event_product_id === eventProductId);
+
+    const remainingFor = (ep) => ep.quantity_available - (inCart(ep.id)?.quantity ?? 0);
+
+    const pickableProducts = sellable.filter((ep) => remainingFor(ep) > 0);
+    const pickedProduct = pickableProducts.find((ep) => ep.id === pickProductId);
+    const pickMax = pickedProduct ? remainingFor(pickedProduct) : 0;
+
+    useEffect(() => {
+        if (pickableProducts.length > 0 && !pickableProducts.some((ep) => ep.id === pickProductId)) {
+            setPickProductId(pickableProducts[0].id);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [cart, sellableIds]);
+
+    const addToCart = (e) => {
         e.preventDefault();
-        form.post(route('sales.store', event.id), {
-            preserveScroll: true,
-            onSuccess: () => form.reset('customer_name', 'quantity'),
+        if (!pickedProduct) return;
+
+        const quantity = Math.min(Math.max(1, Number(pickQuantity) || 1), pickMax);
+
+        setCart((current) => {
+            const existing = current.find((item) => item.event_product_id === pickedProduct.id);
+            if (existing) {
+                return current.map((item) =>
+                    item.event_product_id === pickedProduct.id
+                        ? { ...item, quantity: item.quantity + quantity }
+                        : item,
+                );
+            }
+            return [
+                ...current,
+                {
+                    event_product_id: pickedProduct.id,
+                    product_name: pickedProduct.product.name,
+                    unit_price: pickedProduct.unit_price,
+                    quantity,
+                },
+            ];
         });
+        setPickQuantity(1);
     };
 
-    const cancelSale = (sale) => {
-        if (confirm(`¿Anular la venta de "${sale.customer_name}"? El stock se repone.`)) {
-            router.delete(route('sales.destroy', sale.id), { preserveScroll: true });
-        }
+    const removeFromCart = (eventProductId) => {
+        setCart((current) => current.filter((item) => item.event_product_id !== eventProductId));
+    };
+
+    const cartTotal = cart.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
+
+    const submit = (e) => {
+        e.preventDefault();
+        setProcessing(true);
+        setErrors({});
+        router.post(
+            route('sales.store', event.id),
+            {
+                customer_name: customerName,
+                items: cart.map((item) => ({
+                    event_product_id: item.event_product_id,
+                    quantity: item.quantity,
+                })),
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setCustomerName('');
+                    setCart([]);
+                },
+                onError: (e) => setErrors(e),
+                onFinish: () => setProcessing(false),
+            },
+        );
     };
 
     return (
@@ -266,49 +324,105 @@ function SalesSection({ event, eventProducts, sales }) {
             <h3 className="mb-4 text-lg font-medium text-gray-900">Ventas</h3>
 
             {sellable.length > 0 ? (
-                <form onSubmit={submit} className="mb-6 flex flex-wrap items-start gap-4">
-                    <div>
-                        <InputLabel htmlFor="event_product_id" value="Producto" />
-                        <select
-                            id="event_product_id"
-                            value={form.data.event_product_id}
-                            onChange={(e) => form.setData('event_product_id', e.target.value)}
-                            className="mt-1 block w-48 rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500"
-                        >
-                            {sellable.map((ep) => (
-                                <option key={ep.id} value={ep.id}>
-                                    {ep.product.name} ({ep.quantity_available} disp.)
-                                </option>
-                            ))}
-                        </select>
-                        <InputError message={form.errors.event_product_id} className="mt-1" />
-                    </div>
+                <div className="mb-6 space-y-4 rounded-lg border border-gray-200 p-4">
                     <div>
                         <InputLabel htmlFor="customer_name" value="Cliente" />
                         <TextInput
                             id="customer_name"
-                            value={form.data.customer_name}
-                            onChange={(e) => form.setData('customer_name', e.target.value)}
-                            className="mt-1 block w-48"
+                            value={customerName}
+                            onChange={(e) => setCustomerName(e.target.value)}
+                            className="mt-1 block w-64"
+                            placeholder="Nombre del cliente"
                         />
-                        <InputError message={form.errors.customer_name} className="mt-1" />
+                        <InputError message={errors.customer_name} className="mt-1" />
                     </div>
+
+                    {pickableProducts.length > 0 && (
+                        <form onSubmit={addToCart} className="flex flex-wrap items-start gap-4">
+                            <div>
+                                <InputLabel htmlFor="pick_product" value="Producto" />
+                                <select
+                                    id="pick_product"
+                                    value={pickProductId}
+                                    onChange={(e) => setPickProductId(Number(e.target.value))}
+                                    className="mt-1 block w-48 rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500"
+                                >
+                                    {pickableProducts.map((ep) => (
+                                        <option key={ep.id} value={ep.id}>
+                                            {ep.product.name} ({remainingFor(ep)} disp.)
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="pick_quantity" value="Cantidad" />
+                                <TextInput
+                                    id="pick_quantity"
+                                    type="number"
+                                    min="1"
+                                    max={pickMax}
+                                    value={pickQuantity}
+                                    onChange={(e) => setPickQuantity(e.target.value)}
+                                    className="mt-1 block w-24"
+                                />
+                            </div>
+                            <div className="pt-6">
+                                <SecondaryButton type="submit">+ Agregar al pedido</SecondaryButton>
+                            </div>
+                        </form>
+                    )}
+
+                    {cart.length > 0 && (
+                        <div className="space-y-2">
+                            <table className="w-full text-left text-sm">
+                                <thead className="border-b text-xs uppercase text-gray-500">
+                                    <tr>
+                                        <th className="py-1.5 pr-2">Producto</th>
+                                        <th className="py-1.5 pr-2">Cant.</th>
+                                        <th className="py-1.5 pr-2">Subtotal</th>
+                                        <th className="py-1.5 pr-2"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {cart.map((item) => (
+                                        <tr key={item.event_product_id} className="border-b last:border-0">
+                                            <td className="py-1.5 pr-2 font-medium text-gray-900">
+                                                {item.product_name}
+                                            </td>
+                                            <td className="py-1.5 pr-2">{item.quantity}</td>
+                                            <td className="py-1.5 pr-2">{money(item.unit_price * item.quantity)}</td>
+                                            <td className="py-1.5 pr-2 text-right">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeFromCart(item.event_product_id)}
+                                                    className="text-red-600 hover:underline"
+                                                >
+                                                    Quitar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            <div className="flex items-center justify-between pt-1">
+                                <span className="text-sm font-medium text-gray-700">
+                                    Total: {money(cartTotal)}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
+                    <InputError message={errors.items} />
+
                     <div>
-                        <InputLabel htmlFor="quantity" value="Cantidad" />
-                        <TextInput
-                            id="quantity"
-                            type="number"
-                            min="1"
-                            value={form.data.quantity}
-                            onChange={(e) => form.setData('quantity', e.target.value)}
-                            className="mt-1 block w-24"
-                        />
-                        <InputError message={form.errors.quantity} className="mt-1" />
+                        <PrimaryButton
+                            onClick={submit}
+                            disabled={processing || cart.length === 0 || !customerName.trim()}
+                        >
+                            Registrar venta{cart.length > 1 ? ` (${cart.length} productos)` : ''}
+                        </PrimaryButton>
                     </div>
-                    <div className="pt-6">
-                        <PrimaryButton disabled={form.processing}>Registrar venta</PrimaryButton>
-                    </div>
-                </form>
+                </div>
             ) : (
                 <p className="mb-6 text-sm text-gray-500">
                     No hay stock disponible para vender. Agrega productos al evento primero.
@@ -328,25 +442,8 @@ function SalesSection({ event, eventProducts, sales }) {
                     </tr>
                 </thead>
                 <tbody>
-                    {sales.map((sale) => (
-                        <tr key={sale.id} className="border-b transition-colors last:border-0 hover:bg-rose-50/50">
-                            <td className="py-2 pr-2 font-medium text-gray-900">{sale.customer_name}</td>
-                            <td className="py-2 pr-2">{sale.product_name}</td>
-                            <td className="py-2 pr-2">{sale.quantity}</td>
-                            <td className="py-2 pr-2">{money(sale.total)}</td>
-                            <td className="py-2 pr-2">
-                                <SaleStatusCell sale={sale} />
-                            </td>
-                            <td className="py-2 pr-2 text-gray-500">{sale.sold_by}</td>
-                            <td className="py-2 pr-2 text-right">
-                                <button
-                                    onClick={() => cancelSale(sale)}
-                                    className="text-red-600 hover:underline"
-                                >
-                                    Anular
-                                </button>
-                            </td>
-                        </tr>
+                    {groupSales(sales).map((group) => (
+                        <SaleGroupRow key={group[0].group_id ?? `single-${group[0].id}`} group={group} />
                     ))}
                     {sales.length === 0 && (
                         <tr>
@@ -361,31 +458,92 @@ function SalesSection({ event, eventProducts, sales }) {
     );
 }
 
-function SaleStatusCell({ sale }) {
+// Sales made in the same checkout share a group_id — fold them into one row
+// while every underlying Sale row still discounts its own product's stock.
+function groupSales(sales) {
+    const order = [];
+    const groups = new Map();
+
+    sales.forEach((sale) => {
+        const key = sale.group_id ?? `single-${sale.id}`;
+        if (!groups.has(key)) {
+            groups.set(key, []);
+            order.push(key);
+        }
+        groups.get(key).push(sale);
+    });
+
+    return order.map((key) => groups.get(key));
+}
+
+function SaleGroupRow({ group }) {
+    const first = group[0];
+    const isGroup = group.length > 1;
+    const totalQuantity = group.reduce((sum, sale) => sum + sale.quantity, 0);
+    const totalAmount = group.reduce((sum, sale) => sum + sale.total, 0);
+
+    const updateRoute = () =>
+        isGroup ? route('sales.group.update', first.group_id) : route('sales.update', first.id);
+    const destroyRoute = () =>
+        isGroup ? route('sales.group.destroy', first.group_id) : route('sales.destroy', first.id);
+
     const markPaid = (method) => {
         if (!method) return;
-        router.put(
-            route('sales.update', sale.id),
-            { paid: true, payment_method: method },
-            { preserveScroll: true },
-        );
+        router.put(updateRoute(), { paid: true, payment_method: method }, { preserveScroll: true });
     };
 
     const markPending = () => {
-        router.put(
-            route('sales.update', sale.id),
-            { paid: false, payment_method: null },
-            { preserveScroll: true },
-        );
+        router.put(updateRoute(), { paid: false, payment_method: null }, { preserveScroll: true });
     };
 
-    if (sale.paid) {
+    const cancel = () => {
+        const label = isGroup
+            ? `el pedido de "${first.customer_name}" (${group.length} productos)`
+            : `la venta de "${first.customer_name}"`;
+        if (confirm(`¿Anular ${label}? El stock se repone.`)) {
+            router.delete(destroyRoute(), { preserveScroll: true });
+        }
+    };
+
+    return (
+        <tr className="border-b align-top transition-colors last:border-0 hover:bg-rose-50/50">
+            <td className="py-2 pr-2 font-medium text-gray-900">{first.customer_name}</td>
+            <td className="py-2 pr-2">
+                {isGroup ? (
+                    <ul className="space-y-0.5">
+                        {group.map((sale) => (
+                            <li key={sale.id}>
+                                {sale.product_name} <span className="text-gray-400">x{sale.quantity}</span>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    first.product_name
+                )}
+            </td>
+            <td className="py-2 pr-2">{totalQuantity}</td>
+            <td className="py-2 pr-2">{money(totalAmount)}</td>
+            <td className="py-2 pr-2">
+                <SaleStatusCell paid={first.paid} paymentMethod={first.payment_method} onMarkPaid={markPaid} onMarkPending={markPending} />
+            </td>
+            <td className="py-2 pr-2 text-gray-500">{first.sold_by}</td>
+            <td className="py-2 pr-2 text-right">
+                <button onClick={cancel} className="text-red-600 hover:underline">
+                    Anular
+                </button>
+            </td>
+        </tr>
+    );
+}
+
+function SaleStatusCell({ paid, paymentMethod, onMarkPaid, onMarkPending }) {
+    if (paid) {
         return (
             <div className="flex items-center gap-2">
                 <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-700">
-                    Pagó · {sale.payment_method}
+                    Pagó · {paymentMethod}
                 </span>
-                <button onClick={markPending} className="text-xs text-gray-400 hover:underline">
+                <button onClick={onMarkPending} className="text-xs text-gray-400 hover:underline">
                     Deshacer
                 </button>
             </div>
@@ -399,7 +557,7 @@ function SaleStatusCell({ sale }) {
             </span>
             <select
                 value=""
-                onChange={(e) => markPaid(e.target.value)}
+                onChange={(e) => onMarkPaid(e.target.value)}
                 className="rounded-md border-gray-300 py-0.5 text-xs shadow-sm focus:border-rose-500 focus:ring-rose-500"
             >
                 <option value="">Marcar pagado...</option>

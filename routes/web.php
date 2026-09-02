@@ -30,6 +30,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('event-products/{eventProduct}', [EventProductController::class, 'destroy'])->name('event-products.destroy');
 
     Route::post('events/{event}/sales', [SaleController::class, 'store'])->name('sales.store');
+    Route::put('sales/group/{groupId}', [SaleController::class, 'updateGroup'])->name('sales.group.update');
+    Route::delete('sales/group/{groupId}', [SaleController::class, 'destroyGroup'])->name('sales.group.destroy');
     Route::put('sales/{sale}', [SaleController::class, 'update'])->name('sales.update');
     Route::delete('sales/{sale}', [SaleController::class, 'destroy'])->name('sales.destroy');
 

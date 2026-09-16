@@ -123,4 +123,19 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Registration Invite Code
+    |--------------------------------------------------------------------------
+    |
+    | Sweetia tracks real sales and financial data, so public sign-up must
+    | not be open to anyone who finds the URL. New staff need this shared
+    | code to create an account. Leave unset to block self-registration
+    | entirely (an admin can still create accounts via php artisan tinker
+    | or a seeder).
+    |
+    */
+
+    'registration_code' => env('REGISTRATION_CODE'),
+
 ];

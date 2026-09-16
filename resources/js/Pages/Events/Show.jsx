@@ -782,6 +782,7 @@ function SaleGroupRow({ group, editing, onEdit, onCancelEdit }) {
     const isGroup = group.length > 1;
     const totalQuantity = group.reduce((sum, sale) => sum + sale.quantity, 0);
     const totalAmount = group.reduce((sum, sale) => sum + sale.total, 0);
+    const totalPaid = group.reduce((sum, sale) => sum + sale.amount_paid, 0);
 
     const updateRoute = () =>
         isGroup
@@ -804,19 +805,18 @@ function SaleGroupRow({ group, editing, onEdit, onCancelEdit }) {
         );
     }
 
-    const markPaid = (method) => {
-        if (!method) return;
-        router.put(
-            updateRoute(),
-            { paid: true, payment_method: method },
-            { preserveScroll: true },
-        );
-    };
-
     const markPending = () => {
         router.put(
             updateRoute(),
             { paid: false, payment_method: null },
+            { preserveScroll: true },
+        );
+    };
+
+    const abonar = (amount, method) => {
+        router.put(
+            updateRoute(),
+            { abono: amount, payment_method: method },
             { preserveScroll: true },
         );
     };
@@ -861,10 +861,12 @@ function SaleGroupRow({ group, editing, onEdit, onCancelEdit }) {
             </td>
             <td>
                 <SaleStatusCell
-                    paid={first.paid}
+                    paid={totalAmount > 0 && totalPaid >= totalAmount}
                     paymentMethod={first.payment_method}
-                    onMarkPaid={markPaid}
+                    total={totalAmount}
+                    amountPaid={totalPaid}
                     onMarkPending={markPending}
+                    onAbono={abonar}
                 />
             </td>
             <td>
@@ -944,15 +946,6 @@ function SaleGroupEditRow({ group, isGroup, updateRoute, onDone, onCancel }) {
     // Payment/delivery status aren't part of this edit — they keep their own
     // one-click controls so toggling them doesn't require saving/discarding
     // whatever quantity or name change is still in progress here.
-    const markPaid = (method) => {
-        if (!method) return;
-        router.put(
-            updateRoute,
-            { paid: true, payment_method: method },
-            { preserveScroll: true },
-        );
-    };
-
     const markPending = () => {
         router.put(
             updateRoute,
@@ -961,9 +954,22 @@ function SaleGroupEditRow({ group, isGroup, updateRoute, onDone, onCancel }) {
         );
     };
 
+    const abonar = (amount, method) => {
+        router.put(
+            updateRoute,
+            { abono: amount, payment_method: method },
+            { preserveScroll: true },
+        );
+    };
+
     const toggleDelivered = (delivered) => {
         router.put(updateRoute, { delivered }, { preserveScroll: true });
     };
+
+    // Payment reflects the sale rows as saved, not the in-progress quantity
+    // edit below, since that edit hasn't been submitted yet.
+    const savedTotal = group.reduce((sum, sale) => sum + sale.total, 0);
+    const savedPaid = group.reduce((sum, sale) => sum + sale.amount_paid, 0);
 
     const liveQuantity = isGroup
         ? form.data.items.reduce(
@@ -1038,10 +1044,12 @@ function SaleGroupEditRow({ group, isGroup, updateRoute, onDone, onCancel }) {
             <td className="font-semibold text-[#241b2a]">{money(liveTotal)}</td>
             <td>
                 <SaleStatusCell
-                    paid={first.paid}
+                    paid={savedTotal > 0 && savedPaid >= savedTotal}
                     paymentMethod={first.payment_method}
-                    onMarkPaid={markPaid}
+                    total={savedTotal}
+                    amountPaid={savedPaid}
                     onMarkPending={markPending}
+                    onAbono={abonar}
                 />
             </td>
             <td>
@@ -1072,7 +1080,9 @@ function SaleGroupEditRow({ group, isGroup, updateRoute, onDone, onCancel }) {
     );
 }
 
-function SaleStatusCell({ paid, paymentMethod, onMarkPaid, onMarkPending }) {
+function SaleStatusCell({ paid, paymentMethod, total, amountPaid, onMarkPending, onAbono }) {
+    const [open, setOpen] = useState(false);
+
     if (paid) {
         return (
             <div className="flex flex-wrap items-center gap-2">
@@ -1089,21 +1099,90 @@ function SaleStatusCell({ paid, paymentMethod, onMarkPaid, onMarkPending }) {
         );
     }
 
+    const pending = Math.max(total - amountPaid, 0);
+
+    if (open) {
+        return (
+            <AbonoForm
+                pending={pending}
+                onSubmit={(amount, method) => {
+                    onAbono(amount, method);
+                    setOpen(false);
+                }}
+                onCancel={() => setOpen(false)}
+            />
+        );
+    }
+
     return (
         <div className="flex flex-wrap items-center gap-2">
             <span className="status-pill bg-[#fff1d6] text-[#a66a1d]">
-                Debe
+                {amountPaid > 0
+                    ? `Abonó ${money(amountPaid)} · Debe ${money(pending)}`
+                    : `Debe ${money(pending)}`}
             </span>
-            <select
-                value=""
-                onChange={(e) => onMarkPaid(e.target.value)}
-                className="field-input min-w-[120px] py-1.5 text-[11px]"
+            <button
+                onClick={() => setOpen(true)}
+                className="text-[11px] font-medium text-[#d94a7d] hover:text-[#b93d69]"
             >
-                <option value="">Marcar pagado...</option>
+                Abonar
+            </button>
+        </div>
+    );
+}
+
+// Opens inline in place of the status pill so registering a payment never
+// grows the row beyond one compact line — prefilled with the full pending
+// amount, so confirming as-is doubles as "mark fully paid".
+function AbonoForm({ pending, onSubmit, onCancel }) {
+    const [amount, setAmount] = useState(String(pending));
+    const [method, setMethod] = useState("");
+
+    const submit = (e) => {
+        e.preventDefault();
+        const value = Math.min(Math.max(Number(amount) || 0, 0), pending);
+        if (value <= 0 || !method) return;
+        onSubmit(value, method);
+    };
+
+    return (
+        <form onSubmit={submit} className="flex flex-wrap items-center gap-1.5">
+            <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                max={pending}
+                autoFocus
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="field-input w-[84px] py-1 text-[11px]"
+            />
+            <select
+                value={method}
+                onChange={(e) => setMethod(e.target.value)}
+                className="field-input py-1 text-[11px]"
+            >
+                <option value="">Método...</option>
                 <option value="Efectivo">Efectivo</option>
                 <option value="Nequi">Nequi</option>
             </select>
-        </div>
+            <button
+                type="submit"
+                disabled={!amount || !method}
+                title="Confirmar abono"
+                className="rounded-md px-1.5 py-1 text-[13px] font-bold leading-none text-[#1d8d67] hover:bg-[#dff7ee] disabled:opacity-30"
+            >
+                ✓
+            </button>
+            <button
+                type="button"
+                onClick={onCancel}
+                title="Cancelar"
+                className="rounded-md px-1.5 py-1 text-[13px] font-bold leading-none text-[#8a7d88] hover:bg-[#f3edf2]"
+            >
+                ×
+            </button>
+        </form>
     );
 }
 

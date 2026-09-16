@@ -11,6 +11,7 @@ export default function Register() {
         email: '',
         password: '',
         password_confirmation: '',
+        invite_code: '',
     });
 
     const submit = (e) => {
@@ -100,6 +101,30 @@ export default function Register() {
                         message={errors.password_confirmation}
                         className="mt-2"
                     />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel
+                        htmlFor="invite_code"
+                        value="Código de invitación"
+                    />
+
+                    <TextInput
+                        id="invite_code"
+                        name="invite_code"
+                        value={data.invite_code}
+                        className="mt-1 block w-full"
+                        autoComplete="off"
+                        onChange={(e) =>
+                            setData('invite_code', e.target.value)
+                        }
+                        required
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                        Pídeselo al administrador de Sweetía.
+                    </p>
+
+                    <InputError message={errors.invite_code} className="mt-2" />
                 </div>
 
                 <div className="mt-4 flex items-center justify-end">

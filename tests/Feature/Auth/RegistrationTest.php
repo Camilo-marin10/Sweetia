@@ -23,9 +23,24 @@ class RegistrationTest extends TestCase
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'invite_code' => 'testing-invite-code',
         ]);
 
         $this->assertAuthenticated();
         $response->assertRedirect(route('dashboard', absolute: false));
+    }
+
+    public function test_registration_requires_a_valid_invite_code(): void
+    {
+        $response = $this->post('/register', [
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+            'invite_code' => 'wrong-code',
+        ]);
+
+        $response->assertSessionHasErrors('invite_code');
+        $this->assertGuest();
     }
 }

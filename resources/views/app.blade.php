@@ -14,7 +14,7 @@
         <link href="https://fonts.bunny.net/css?family=baloo-2:600,700,800&display=swap" rel="stylesheet" />
 
         <!-- Scripts -->
-        @routes
+        @routes(nonce: $cspNonce ?? null)
         @viteReactRefresh
         @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
         @inertiaHead

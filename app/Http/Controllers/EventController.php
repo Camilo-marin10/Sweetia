@@ -13,8 +13,8 @@ class EventController extends Controller
 {
     public function index(): Response
     {
-        $events = Event::withSum(['sales as paid_total' => fn ($query) => $query->where('paid', true)], 'total')
-            ->withSum(['sales as pending_total' => fn ($query) => $query->where('paid', false)], 'total')
+        $events = Event::withSum('sales as sales_total', 'total')
+            ->withSum('sales as paid_total', 'amount_paid')
             ->withSum('expenses', 'amount')
             ->orderByDesc('event_date')
             ->get()
@@ -24,7 +24,7 @@ class EventController extends Controller
                 'event_date' => $event->event_date->toDateString(),
                 'status' => $event->status,
                 'income' => (float) ($event->paid_total ?? 0),
-                'pending' => (float) ($event->pending_total ?? 0),
+                'pending' => (float) ($event->sales_total ?? 0) - (float) ($event->paid_total ?? 0),
                 'expenses' => (float) ($event->expenses_sum_amount ?? 0),
                 'profit' => (float) ($event->paid_total ?? 0) - (float) ($event->expenses_sum_amount ?? 0),
             ]);
@@ -59,8 +59,8 @@ class EventController extends Controller
             'expenses' => fn ($query) => $query->latest()->with(['registeredByUser', 'eventProduct.product']),
         ]);
 
-        $income = $event->sales->where('paid', true)->sum('total');
-        $pending = $event->sales->where('paid', false)->sum('total');
+        $income = $event->sales->sum('amount_paid');
+        $pending = $event->sales->sum('total') - $income;
         $expenseTotal = $event->expenses->sum('amount');
         $totalUnitsMade = $event->eventProducts->sum('quantity_made');
         $avgCostPerUnit = $totalUnitsMade > 0 ? $expenseTotal / $totalUnitsMade : 0;
@@ -93,6 +93,7 @@ class EventController extends Controller
                 'total' => (float) $sale->total,
                 'payment_method' => $sale->payment_method,
                 'paid' => $sale->paid,
+                'amount_paid' => (float) $sale->amount_paid,
                 'delivered' => $sale->delivered,
                 'sold_by' => $sale->seller->name,
                 'created_at' => $sale->created_at->toDateTimeString(),

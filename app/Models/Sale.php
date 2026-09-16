@@ -20,6 +20,7 @@ class Sale extends Model
         'total',
         'payment_method',
         'paid',
+        'amount_paid',
         'delivered',
         'sold_by',
         'notes',

@@ -61,8 +61,6 @@ function computePresets() {
     };
 }
 
-// Rounds only the outer end of a bar and keeps the baseline edge square —
-// growing up for positive values, down for negative ones (diverging charts).
 function RoundedBar(props) {
     const { x, y, width, height, fill, dataKey, payload } = props;
     const radius = Math.min(4, width / 2, Math.abs(height));

@@ -35,7 +35,16 @@ class RegisteredUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'invite_code' => ['required', 'string'],
         ]);
+
+        $expectedCode = config('app.registration_code');
+
+        if (blank($expectedCode) || ! hash_equals((string) $expectedCode, $request->string('invite_code')->value())) {
+            throw ValidationException::withMessages([
+                'invite_code' => 'Código de invitación inválido.',
+            ]);
+        }
 
         $user = User::create([
             'name' => $request->name,

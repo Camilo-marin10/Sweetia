@@ -8,12 +8,12 @@ use Tests\TestCase;
 class ExampleTest extends TestCase
 {
     /**
-     * A basic test example.
+     * "/" hands off to the events dashboard, which itself requires auth.
      */
-    public function test_the_application_returns_a_successful_response(): void
+    public function test_the_application_redirects_to_events(): void
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        $response->assertRedirect(route('events.index'));
     }
 }

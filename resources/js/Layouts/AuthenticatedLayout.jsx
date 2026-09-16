@@ -31,12 +31,16 @@ export default function AuthenticatedLayout({ header, children }) {
                                 >
                                     Eventos
                                 </NavLink>
-                                <NavLink
-                                    href={route("products.index")}
-                                    active={route().current("products.*")}
-                                >
-                                    Productos
-                                </NavLink>
+                                {user.role === "admin" && (
+                                    <NavLink
+                                        href={route("products.index")}
+                                        active={route().current(
+                                            "products.*",
+                                        )}
+                                    >
+                                        Productos
+                                    </NavLink>
+                                )}
                                 <NavLink
                                     href={route("reports.index")}
                                     active={route().current("reports.*")}
@@ -147,12 +151,14 @@ export default function AuthenticatedLayout({ header, children }) {
                         >
                             Eventos
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            href={route("products.index")}
-                            active={route().current("products.*")}
-                        >
-                            Productos
-                        </ResponsiveNavLink>
+                        {user.role === "admin" && (
+                            <ResponsiveNavLink
+                                href={route("products.index")}
+                                active={route().current("products.*")}
+                            >
+                                Productos
+                            </ResponsiveNavLink>
+                        )}
                         <ResponsiveNavLink
                             href={route("reports.index")}
                             active={route().current("reports.*")}

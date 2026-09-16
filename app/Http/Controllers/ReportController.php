@@ -30,13 +30,13 @@ class ReportController extends Controller
 
         $income = DB::table('sales')
             ->whereIn('event_id', $eventIds)
-            ->where('paid', true)
+            ->sum('amount_paid');
+
+        $salesTotal = DB::table('sales')
+            ->whereIn('event_id', $eventIds)
             ->sum('total');
 
-        $pending = DB::table('sales')
-            ->whereIn('event_id', $eventIds)
-            ->where('paid', false)
-            ->sum('total');
+        $pending = $salesTotal - $income;
 
         $expenses = DB::table('expenses')
             ->whereIn('event_id', $eventIds)
@@ -49,8 +49,7 @@ class ReportController extends Controller
         $incomeByMonth = DB::table('sales')
             ->join('events', 'events.id', '=', 'sales.event_id')
             ->whereIn('sales.event_id', $eventIds)
-            ->where('sales.paid', true)
-            ->selectRaw("DATE_FORMAT(events.event_date, '%Y-%m') as month, SUM(sales.total) as total")
+            ->selectRaw("DATE_FORMAT(events.event_date, '%Y-%m') as month, SUM(sales.amount_paid) as total")
             ->groupBy('month')
             ->pluck('total', 'month');
 
@@ -103,7 +102,7 @@ class ReportController extends Controller
         }
 
         $events = Event::whereIn('id', $eventIds)
-            ->withSum(['sales as paid_total' => fn ($q) => $q->where('paid', true)], 'total')
+            ->withSum('sales as paid_total', 'amount_paid')
             ->withSum('expenses', 'amount')
             ->orderByDesc('event_date')
             ->get()

@@ -95,7 +95,7 @@ function EventHeader({ event }) {
                     })}
                 </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
                 <StatusSelect event={event} />
                 <button
                     onClick={() => setEditing(true)}
@@ -277,7 +277,7 @@ function EventProductsSection({ event, eventProducts, availableProducts }) {
             </div>
 
             <div className="overflow-x-auto p-4 sm:p-5">
-                <table className="data-table min-w-[980px]">
+                <table className="data-table md:min-w-[980px]">
                     <thead>
                         <tr>
                             <th>Producto</th>
@@ -425,12 +425,15 @@ function EventProductRow({
     if (!editing) {
         return (
             <tr>
-                <td className="font-semibold text-[#241b2a]">
+                <td
+                    data-label="Producto"
+                    className="font-semibold text-[#241b2a]"
+                >
                     {eventProduct.product.name}
                 </td>
-                <td>{eventProduct.quantity_made}</td>
-                <td>{eventProduct.quantity_sold}</td>
-                <td>
+                <td data-label="Hecho">{eventProduct.quantity_made}</td>
+                <td data-label="Vendido">{eventProduct.quantity_sold}</td>
+                <td data-label="Disponible">
                     <span
                         className={
                             eventProduct.quantity_available <= 0
@@ -441,11 +444,11 @@ function EventProductRow({
                         {eventProduct.quantity_available}
                     </span>
                 </td>
-                <td>{money(eventProduct.unit_price)}</td>
-                <td className="text-[#6e6774]">
+                <td data-label="Precio">{money(eventProduct.unit_price)}</td>
+                <td data-label="Costo/u" className="text-[#6e6774]">
                     {money(eventProduct.cost_per_unit)}
                 </td>
-                <td>
+                <td data-label="Ganancia/u">
                     <span
                         className={
                             eventProduct.profit_per_unit >= 0
@@ -456,8 +459,8 @@ function EventProductRow({
                         {money(eventProduct.profit_per_unit)}
                     </span>
                 </td>
-                <td className="text-right">
-                    <div className="flex justify-end gap-3">
+                <td data-label="Acciones" className="md:text-right">
+                    <div className="flex gap-3 md:justify-end">
                         <button
                             onClick={onEdit}
                             className="text-sm font-medium text-[#d94a7d] hover:text-[#b93d69]"
@@ -486,10 +489,10 @@ function EventProductRow({
 
     return (
         <tr className="bg-[#fff7fb]">
-            <td className="font-semibold text-[#241b2a]">
+            <td data-label="Producto" className="font-semibold text-[#241b2a]">
                 {eventProduct.product.name}
             </td>
-            <td>
+            <td data-label="Hecho">
                 <TextInput
                     type="number"
                     min={eventProduct.quantity_sold}
@@ -504,12 +507,14 @@ function EventProductRow({
                     className="mt-1"
                 />
             </td>
-            <td className="text-[#6e6774]">{eventProduct.quantity_sold}</td>
-            <td>
+            <td data-label="Vendido" className="text-[#6e6774]">
+                {eventProduct.quantity_sold}
+            </td>
+            <td data-label="Disponible">
                 {(Number(form.data.quantity_made) || 0) -
                     eventProduct.quantity_sold}
             </td>
-            <td>
+            <td data-label="Precio">
                 <TextInput
                     type="number"
                     min="0"
@@ -520,10 +525,10 @@ function EventProductRow({
                 />
                 <InputError message={form.errors.unit_price} className="mt-1" />
             </td>
-            <td className="text-[#6e6774]">
+            <td data-label="Costo/u" className="text-[#6e6774]">
                 {money(eventProduct.cost_per_unit)}
             </td>
-            <td>
+            <td data-label="Ganancia/u">
                 <span
                     className={
                         eventProduct.profit_per_unit >= 0
@@ -534,8 +539,8 @@ function EventProductRow({
                     {money(eventProduct.profit_per_unit)}
                 </span>
             </td>
-            <td className="text-right">
-                <div className="flex justify-end gap-3">
+            <td data-label="Acciones" className="md:text-right">
+                <div className="flex gap-3 md:justify-end">
                     <button
                         onClick={submit}
                         disabled={form.processing}
@@ -766,17 +771,25 @@ function SalesSection({ event, eventProducts, sales }) {
                                     <tbody>
                                         {cart.map((item) => (
                                             <tr key={item.event_product_id}>
-                                                <td className="font-semibold text-[#241b2a]">
+                                                <td
+                                                    data-label="Producto"
+                                                    className="font-semibold text-[#241b2a]"
+                                                >
                                                     {item.product_name}
                                                 </td>
-                                                <td>{item.quantity}</td>
-                                                <td>
+                                                <td data-label="Cant.">
+                                                    {item.quantity}
+                                                </td>
+                                                <td data-label="Subtotal">
                                                     {money(
                                                         item.unit_price *
                                                             item.quantity,
                                                     )}
                                                 </td>
-                                                <td className="text-right">
+                                                <td
+                                                    data-label="Acción"
+                                                    className="md:text-right"
+                                                >
                                                     <button
                                                         type="button"
                                                         onClick={() =>
@@ -827,7 +840,7 @@ function SalesSection({ event, eventProducts, sales }) {
                 )}
 
                 <div className="overflow-x-auto">
-                    <table className="data-table min-w-[980px]">
+                    <table className="data-table md:min-w-[980px]">
                         <thead>
                             <tr>
                                 <th>Cliente</th>
@@ -952,10 +965,10 @@ function SaleGroupRow({ group, editing, onEdit, onCancelEdit }) {
 
     return (
         <tr className="align-top">
-            <td className="font-semibold text-[#241b2a]">
+            <td data-label="Cliente" className="font-semibold text-[#241b2a]">
                 {first.customer_name}
             </td>
-            <td>
+            <td data-label="Producto">
                 {isGroup ? (
                     <ul className="space-y-1">
                         {group.map((sale) => (
@@ -971,11 +984,11 @@ function SaleGroupRow({ group, editing, onEdit, onCancelEdit }) {
                     <span className="text-[#4b3b4b]">{first.product_name}</span>
                 )}
             </td>
-            <td>{totalQuantity}</td>
-            <td className="font-semibold text-[#241b2a]">
+            <td data-label="Cant.">{totalQuantity}</td>
+            <td data-label="Total" className="font-semibold text-[#241b2a]">
                 {money(totalAmount)}
             </td>
-            <td>
+            <td data-label="Estado">
                 <SaleStatusCell
                     paid={totalAmount > 0 && totalPaid >= totalAmount}
                     paymentMethod={first.payment_method}
@@ -985,15 +998,17 @@ function SaleGroupRow({ group, editing, onEdit, onCancelEdit }) {
                     onAbono={abonar}
                 />
             </td>
-            <td>
+            <td data-label="Entrega">
                 <DeliveryStatusCell
                     delivered={first.delivered}
                     onToggle={toggleDelivered}
                 />
             </td>
-            <td className="text-[#6e6774]">{first.sold_by}</td>
-            <td className="text-right">
-                <div className="flex justify-end gap-3">
+            <td data-label="Vendido por" className="text-[#6e6774]">
+                {first.sold_by}
+            </td>
+            <td data-label="Acciones" className="md:text-right">
+                <div className="flex gap-3 md:justify-end">
                     <button
                         onClick={onEdit}
                         className="text-sm font-medium text-[#d94a7d] hover:text-[#b93d69]"
@@ -1104,7 +1119,7 @@ function SaleGroupEditRow({ group, isGroup, updateRoute, onDone, onCancel }) {
 
     return (
         <tr className="bg-[#fff7fb] align-top">
-            <td>
+            <td data-label="Cliente">
                 <TextInput
                     value={form.data.customer_name}
                     onChange={(e) =>
@@ -1117,7 +1132,7 @@ function SaleGroupEditRow({ group, isGroup, updateRoute, onDone, onCancel }) {
                     className="mt-1"
                 />
             </td>
-            <td>
+            <td data-label="Producto">
                 {isGroup ? (
                     <ul className="space-y-2">
                         {form.data.items.map((item) => (
@@ -1156,9 +1171,11 @@ function SaleGroupEditRow({ group, isGroup, updateRoute, onDone, onCancel }) {
                     className="mt-1"
                 />
             </td>
-            <td>{liveQuantity}</td>
-            <td className="font-semibold text-[#241b2a]">{money(liveTotal)}</td>
-            <td>
+            <td data-label="Cant.">{liveQuantity}</td>
+            <td data-label="Total" className="font-semibold text-[#241b2a]">
+                {money(liveTotal)}
+            </td>
+            <td data-label="Estado">
                 <SaleStatusCell
                     paid={savedTotal > 0 && savedPaid >= savedTotal}
                     paymentMethod={first.payment_method}
@@ -1168,15 +1185,17 @@ function SaleGroupEditRow({ group, isGroup, updateRoute, onDone, onCancel }) {
                     onAbono={abonar}
                 />
             </td>
-            <td>
+            <td data-label="Entrega">
                 <DeliveryStatusCell
                     delivered={first.delivered}
                     onToggle={toggleDelivered}
                 />
             </td>
-            <td className="text-[#6e6774]">{first.sold_by}</td>
-            <td className="text-right">
-                <div className="flex justify-end gap-3">
+            <td data-label="Vendido por" className="text-[#6e6774]">
+                {first.sold_by}
+            </td>
+            <td data-label="Acciones" className="md:text-right">
+                <div className="flex gap-3 md:justify-end">
                     <button
                         onClick={submit}
                         disabled={form.processing}
@@ -1521,7 +1540,7 @@ function ExpensesTable({
                 </span>
             </div>
             <div className="overflow-x-auto">
-                <table className="data-table min-w-[840px]">
+                <table className="data-table md:min-w-[840px]">
                     <thead>
                         <tr>
                             <th>Categoría</th>
@@ -1572,19 +1591,26 @@ function ExpenseRow({ expense, editing, onEdit, onCancelEdit, onDestroy }) {
     if (!editing) {
         return (
             <tr>
-                <td className="font-medium text-[#4b3b4b]">
+                <td data-label="Categoría" className="font-medium text-[#4b3b4b]">
                     {expense.category}
                 </td>
-                <td className="font-semibold text-[#241b2a]">
+                <td
+                    data-label="Descripción"
+                    className="font-semibold text-[#241b2a]"
+                >
                     {expense.description}
                 </td>
-                <td className="font-semibold text-[#241b2a]">
+                <td data-label="Monto" className="font-semibold text-[#241b2a]">
                     {money(expense.amount)}
                 </td>
-                <td className="text-[#6e6774]">{expense.expense_date}</td>
-                <td className="text-[#6e6774]">{expense.registered_by}</td>
-                <td className="text-right">
-                    <div className="flex justify-end gap-3">
+                <td data-label="Fecha" className="text-[#6e6774]">
+                    {expense.expense_date}
+                </td>
+                <td data-label="Registrado por" className="text-[#6e6774]">
+                    {expense.registered_by}
+                </td>
+                <td data-label="Acciones" className="md:text-right">
+                    <div className="flex gap-3 md:justify-end">
                         <button
                             onClick={onEdit}
                             className="text-sm font-medium text-[#d94a7d] hover:text-[#b93d69]"
@@ -1617,7 +1643,7 @@ function ExpenseRow({ expense, editing, onEdit, onCancelEdit, onDestroy }) {
 
     return (
         <tr className="bg-[#fff7fb]">
-            <td>
+            <td data-label="Categoría">
                 <TextInput
                     value={form.data.category}
                     onChange={(e) => form.setData("category", e.target.value)}
@@ -1625,7 +1651,7 @@ function ExpenseRow({ expense, editing, onEdit, onCancelEdit, onDestroy }) {
                 />
                 <InputError message={form.errors.category} className="mt-1" />
             </td>
-            <td>
+            <td data-label="Descripción">
                 <TextInput
                     value={form.data.description}
                     onChange={(e) =>
@@ -1638,7 +1664,7 @@ function ExpenseRow({ expense, editing, onEdit, onCancelEdit, onDestroy }) {
                     className="mt-1"
                 />
             </td>
-            <td>
+            <td data-label="Monto">
                 <TextInput
                     type="number"
                     min="0"
@@ -1649,7 +1675,7 @@ function ExpenseRow({ expense, editing, onEdit, onCancelEdit, onDestroy }) {
                 />
                 <InputError message={form.errors.amount} className="mt-1" />
             </td>
-            <td>
+            <td data-label="Fecha">
                 <TextInput
                     type="date"
                     value={form.data.expense_date}
@@ -1663,9 +1689,11 @@ function ExpenseRow({ expense, editing, onEdit, onCancelEdit, onDestroy }) {
                     className="mt-1"
                 />
             </td>
-            <td className="text-[#6e6774]">{expense.registered_by}</td>
-            <td className="text-right">
-                <div className="flex justify-end gap-3">
+            <td data-label="Registrado por" className="text-[#6e6774]">
+                {expense.registered_by}
+            </td>
+            <td data-label="Acciones" className="md:text-right">
+                <div className="flex gap-3 md:justify-end">
                     <button
                         onClick={submit}
                         disabled={form.processing}

@@ -15,7 +15,7 @@ export default function AuthenticatedLayout({ header, children }) {
         <div className="app-shell">
             <nav className="sticky top-0 z-40 border-b border-[#f0dce6] bg-white/85 backdrop-blur-xl">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="flex h-20 justify-between">
+                    <div className="flex h-16 justify-between sm:h-20">
                         <div className="flex items-center gap-4">
                             <Link href="/" className="flex items-center gap-3">
                                 <ApplicationLogo className="block h-11 w-11 rounded-2xl ring-4 ring-[#f8dfe9]" />

@@ -114,6 +114,60 @@ body {
     }
 }
 
+/* Below `md`, every .data-table renders as a stack of cards (one per row)
+   instead of a cramped table that only works by scrolling sideways. Each
+   <td> keeps working exactly as-is on desktop; on mobile it just stacks
+   with its column header injected as a label via `data-label`. */
+@media (max-width: 767px) {
+    .data-table thead {
+        display: none;
+    }
+
+    .data-table,
+    .data-table tbody,
+    .data-table tr {
+        display: block;
+        width: 100%;
+    }
+
+    .data-table tbody tr {
+        margin-bottom: 0.75rem;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+    }
+
+    .data-table tbody tr:last-child {
+        margin-bottom: 0;
+    }
+
+    .data-table tbody td {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.3rem;
+        width: auto;
+    }
+
+    .data-table tbody tr > td:last-child {
+        border-bottom: none;
+    }
+
+    .data-table tbody td[data-label]::before {
+        content: attr(data-label);
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--ink-500);
+    }
+
+    /* Empty-state rows (colSpan message, no data-label) stay plain text. */
+    .data-table tbody td:not([data-label]) {
+        text-align: center;
+    }
+}
+
 input[type="date"]::-webkit-calendar-picker-indicator {
     opacity: 0.7;
 }

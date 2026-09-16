@@ -164,14 +164,17 @@ function ProductRow({ product, editing, onEdit, onCancelEdit, onDelete }) {
     if (!editing) {
         return (
             <tr>
-                <td className="px-5 py-3 font-semibold text-[#241b2a]">
+                <td
+                    data-label="Nombre"
+                    className="px-5 py-3 font-semibold text-[#241b2a]"
+                >
                     {product.name}
                 </td>
-                <td className="px-5 py-3 text-[#635867]">
+                <td data-label="Descripción" className="px-5 py-3 text-[#635867]">
                     {product.description || "—"}
                 </td>
-                <td className="px-5 py-3 text-right">
-                    <div className="flex justify-end gap-3">
+                <td data-label="Acciones" className="px-5 py-3 md:text-right">
+                    <div className="flex gap-3 md:justify-end">
                         <button
                             onClick={onEdit}
                             className="text-sm font-medium text-[#d94a7d] hover:text-[#b93d69]"
@@ -200,7 +203,7 @@ function ProductRow({ product, editing, onEdit, onCancelEdit, onDelete }) {
 
     return (
         <tr className="bg-[#fff7fb]">
-            <td className="px-5 py-3">
+            <td data-label="Nombre" className="px-5 py-3">
                 <TextInput
                     value={data.name}
                     onChange={(e) => setData("name", e.target.value)}
@@ -208,15 +211,15 @@ function ProductRow({ product, editing, onEdit, onCancelEdit, onDelete }) {
                 />
                 <InputError message={errors.name} className="mt-1" />
             </td>
-            <td className="px-5 py-3">
+            <td data-label="Descripción" className="px-5 py-3">
                 <TextInput
                     value={data.description}
                     onChange={(e) => setData("description", e.target.value)}
                     className="block w-full"
                 />
             </td>
-            <td className="px-5 py-3 text-right">
-                <div className="flex justify-end gap-3">
+            <td data-label="Acciones" className="px-5 py-3 md:text-right">
+                <div className="flex gap-3 md:justify-end">
                     <button
                         onClick={submit}
                         disabled={processing}

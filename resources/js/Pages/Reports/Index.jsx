@@ -157,7 +157,7 @@ export default function Index({
             <div className="py-8">
                 <div className="mx-auto max-w-6xl space-y-6">
                     {/* Date range filter — scopes everything below it */}
-                    <div className="app-panel-soft flex flex-wrap items-end gap-4 p-4 sm:p-5">
+                    <div className="app-panel-soft flex flex-col gap-4 p-4 sm:flex-row sm:flex-wrap sm:items-end sm:p-5">
                         <div className="flex flex-wrap gap-2">
                             {Object.values(presets).map((preset) => (
                                 <button
@@ -175,8 +175,8 @@ export default function Index({
                                 </button>
                             ))}
                         </div>
-                        <div className="ms-auto flex items-end gap-3 border-l border-[#f0dbe5] pl-4">
-                            <div>
+                        <div className="flex flex-wrap items-end gap-3 border-t border-[#f0dbe5] pt-4 sm:ms-auto sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
+                            <div className="min-w-[140px] flex-1">
                                 <label className="soft-label">Desde</label>
                                 <input
                                     type="date"
@@ -184,10 +184,10 @@ export default function Index({
                                     onChange={(e) =>
                                         applyRange(e.target.value, filters.to)
                                     }
-                                    className="field-input w-[160px] py-2.5"
+                                    className="field-input w-full py-2.5 sm:w-[160px]"
                                 />
                             </div>
-                            <div>
+                            <div className="min-w-[140px] flex-1">
                                 <label className="soft-label">Hasta</label>
                                 <input
                                     type="date"
@@ -195,7 +195,7 @@ export default function Index({
                                     onChange={(e) =>
                                         applyRange(filters.from, e.target.value)
                                     }
-                                    className="field-input w-[160px] py-2.5"
+                                    className="field-input w-full py-2.5 sm:w-[160px]"
                                 />
                             </div>
                         </div>
@@ -406,7 +406,7 @@ function SummaryCards({ summary }) {
     ];
 
     return (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
             {cards.map((card) => (
                 <div key={card.label} className="app-panel-soft p-4 sm:p-5">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7a6876]">
@@ -458,13 +458,22 @@ function ExpensesByProductTable({ expensesByProduct, totalExpenses }) {
 
                             return (
                                 <tr key={row.product_id ?? "general"}>
-                                    <td className="px-5 py-3 font-semibold text-[#241b2a] sm:px-6">
+                                    <td
+                                        data-label="Producto"
+                                        className="px-5 py-3 font-semibold text-[#241b2a] sm:px-6"
+                                    >
                                         {row.product_name}
                                     </td>
-                                    <td className="px-5 py-3 sm:px-6">
+                                    <td
+                                        data-label="Monto"
+                                        className="px-5 py-3 sm:px-6"
+                                    >
                                         {money(row.total)}
                                     </td>
-                                    <td className="px-5 py-3 sm:px-6">
+                                    <td
+                                        data-label="% del total"
+                                        className="px-5 py-3 sm:px-6"
+                                    >
                                         <div className="flex items-center gap-2">
                                             <div className="h-1.5 w-24 overflow-hidden rounded-full bg-[#f5e2eb]">
                                                 <div
@@ -528,7 +537,10 @@ function EventsTable({ events }) {
                     <tbody>
                         {events.map((event) => (
                             <tr key={event.id}>
-                                <td className="px-5 py-3 font-semibold text-[#241b2a] sm:px-6">
+                                <td
+                                    data-label="Evento"
+                                    className="px-5 py-3 font-semibold text-[#241b2a] sm:px-6"
+                                >
                                     <Link
                                         href={route("events.show", event.id)}
                                         className="hover:text-[#b93d69]"
@@ -536,23 +548,27 @@ function EventsTable({ events }) {
                                         {event.name}
                                     </Link>
                                 </td>
-                                <td className="px-5 py-3 text-[#635867] sm:px-6">
+                                <td
+                                    data-label="Fecha"
+                                    className="px-5 py-3 text-[#635867] sm:px-6"
+                                >
                                     {event.event_date}
                                 </td>
-                                <td className="px-5 py-3 sm:px-6">
+                                <td data-label="Estado" className="px-5 py-3 sm:px-6">
                                     <span
                                         className={`status-pill capitalize ${eventStatusStyles[event.status]}`}
                                     >
                                         {event.status}
                                     </span>
                                 </td>
-                                <td className="px-5 py-3 sm:px-6">
+                                <td data-label="Ingresos" className="px-5 py-3 sm:px-6">
                                     {money(event.income)}
                                 </td>
-                                <td className="px-5 py-3 sm:px-6">
+                                <td data-label="Gastos" className="px-5 py-3 sm:px-6">
                                     {money(event.expenses)}
                                 </td>
                                 <td
+                                    data-label="Ganancia"
                                     className={`px-5 py-3 font-semibold sm:px-6 ${event.profit >= 0 ? "text-[#1f9d72]" : "text-[#d85c68]"}`}
                                 >
                                     {money(event.profit)}

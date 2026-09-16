@@ -49,5 +49,12 @@ services:
       - key: REGISTRATION_CODE
         sync: false
 
+      - key: ADMIN_NAME
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+
       - key: MAIL_MAILER
         value: log

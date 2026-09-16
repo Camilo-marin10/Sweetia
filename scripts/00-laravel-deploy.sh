@@ -15,3 +15,6 @@ php artisan view:cache
 
 echo "Running migrations..."
 php artisan migrate --force
+
+echo "Ensuring admin account..."
+php artisan app:ensure-admin

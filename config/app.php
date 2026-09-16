@@ -138,4 +138,19 @@ return [
 
     'registration_code' => env('REGISTRATION_CODE'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Bootstrap Admin Account
+    |--------------------------------------------------------------------------
+    |
+    | Free hosting often has no shell access to run `php artisan tinker`, so
+    | the first admin account is created automatically on deploy (see the
+    | app:ensure-admin command) from these — set once, then safe to remove.
+    |
+    */
+
+    'admin_name' => env('ADMIN_NAME', 'Admin'),
+    'admin_email' => env('ADMIN_EMAIL'),
+    'admin_password' => env('ADMIN_PASSWORD'),
+
 ];

@@ -24,19 +24,7 @@ export default function Show({
 }) {
     return (
         <AuthenticatedLayout
-            header={
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d15d8e]">
-                            Evento
-                        </p>
-                        <h2 className="mt-1 text-2xl font-semibold leading-tight text-[#241b2a]">
-                            {event.name}
-                        </h2>
-                    </div>
-                    <StatusSelect event={event} />
-                </div>
-            }
+            header={<EventHeader event={event} />}
         >
             <Head title={event.name} />
 
@@ -61,6 +49,134 @@ export default function Show({
                 </div>
             </div>
         </AuthenticatedLayout>
+    );
+}
+
+function EventHeader({ event }) {
+    const [editing, setEditing] = useState(false);
+
+    if (editing) {
+        return (
+            <EventEditForm
+                event={event}
+                onDone={() => setEditing(false)}
+                onCancel={() => setEditing(false)}
+            />
+        );
+    }
+
+    const destroy = () => {
+        if (
+            confirm(
+                `¿Eliminar el evento "${event.name}"? También se borrarán sus productos, ventas y gastos. Esta acción no se puede deshacer.`,
+            )
+        ) {
+            router.delete(route("events.destroy", event.id));
+        }
+    };
+
+    return (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d15d8e]">
+                    Evento
+                </p>
+                <h2 className="mt-1 text-2xl font-semibold leading-tight text-[#241b2a]">
+                    {event.name}
+                </h2>
+                <p className="mt-1 text-sm text-[#6e6774]">
+                    {new Date(
+                        event.event_date + "T00:00:00",
+                    ).toLocaleDateString("es-CO", {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                    })}
+                </p>
+            </div>
+            <div className="flex items-center gap-3">
+                <StatusSelect event={event} />
+                <button
+                    onClick={() => setEditing(true)}
+                    className="text-sm font-medium text-[#d94a7d] hover:text-[#b93d69]"
+                >
+                    Editar
+                </button>
+                <button
+                    onClick={destroy}
+                    className="text-sm font-medium text-[#d85c68] hover:text-[#b6404a]"
+                >
+                    Eliminar evento
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function EventEditForm({ event, onDone, onCancel }) {
+    const form = useForm({
+        name: event.name,
+        event_date: event.event_date,
+        notes: event.notes ?? "",
+        status: event.status,
+    });
+
+    const submit = (e) => {
+        e.preventDefault();
+        form.put(route("events.update", event.id), {
+            preserveScroll: true,
+            onSuccess: onDone,
+        });
+    };
+
+    return (
+        <form
+            onSubmit={submit}
+            className="flex flex-wrap items-end gap-4 rounded-[20px] border border-[#f2dce7] bg-[#fffafc] p-4"
+        >
+            <div className="min-w-[220px] flex-1">
+                <InputLabel htmlFor="edit_name" value="Nombre del evento" />
+                <TextInput
+                    id="edit_name"
+                    value={form.data.name}
+                    onChange={(e) => form.setData("name", e.target.value)}
+                    className="mt-2 block w-full"
+                />
+                <InputError message={form.errors.name} className="mt-1" />
+            </div>
+            <div className="min-w-[160px]">
+                <InputLabel htmlFor="edit_event_date" value="Fecha" />
+                <TextInput
+                    id="edit_event_date"
+                    type="date"
+                    value={form.data.event_date}
+                    onChange={(e) =>
+                        form.setData("event_date", e.target.value)
+                    }
+                    className="mt-2 block w-full"
+                />
+                <InputError message={form.errors.event_date} className="mt-1" />
+            </div>
+            <div className="min-w-[220px] flex-1">
+                <InputLabel htmlFor="edit_notes" value="Notas" />
+                <TextInput
+                    id="edit_notes"
+                    value={form.data.notes}
+                    onChange={(e) => form.setData("notes", e.target.value)}
+                    className="mt-2 block w-full"
+                />
+                <InputError message={form.errors.notes} className="mt-1" />
+            </div>
+            <div className="flex gap-3 pb-1">
+                <PrimaryButton disabled={form.processing}>
+                    Guardar
+                </PrimaryButton>
+                <SecondaryButton type="button" onClick={onCancel}>
+                    Cancelar
+                </SecondaryButton>
+            </div>
+        </form>
     );
 }
 
